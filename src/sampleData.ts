@@ -1,0 +1,250 @@
+import { Student, SubjectScores, AttendanceRecord } from './types';
+
+export const SAMPLE_STUDENTS: Student[] = [
+  {
+    id: 'STD-01',
+    nameKh: 'ម៉ៅ វឌ្ឍនៈ',
+    nameEn: 'MAO VATTHANAK',
+    gender: 'ប្រុស',
+    dob: '២០១៥-០៥-១២',
+    pob: 'ភូមិព្រែកព្នៅ សង្កាត់ព្រែកព្នៅ ខណ្ឌព្រែកព្នៅ រាជធានីភ្នំពេញ',
+    pobProvince: 'ភ្នំពេញ',
+    address: 'ភូមិព្រែកព្នៅ ខណ្ឌព្រែកព្នៅ រាជធានីភ្នំពេញ',
+    fatherName: 'ម៉ៅ សុខខេង',
+    fatherJob: 'អាជីវករ',
+    motherName: 'លឹម គឹមហ៊ាង',
+    motherJob: 'មេផ្ទះ',
+    phoneNumber: '012 345 678',
+    classTeacher: 'កែវ ច័ន្ទតារា',
+    gradeClass: 'ថ្នាក់ទី ៥ អា',
+    academicYear: '២០២៤-២០២៥'
+  },
+  {
+    id: 'STD-02',
+    nameKh: 'ចាន់ ស្រីនិច',
+    nameEn: 'CHAN SREYNICH',
+    gender: 'ស្រី',
+    dob: '២០១៥-០៩-២៥',
+    pob: 'ឃុំព្រែកតាមាក់ ស្រុកខ្សាច់កណ្តាល ខេត្តកណ្តាល',
+    pobProvince: 'កណ្តាល',
+    address: 'ភូមិព្រែកលួង ស្រុកខ្សាច់កណ្តាល ខេត្តកណ្តាល',
+    fatherName: 'ចាន់ សុភ័ក្ត្រ',
+    fatherJob: 'កសិករ',
+    motherName: 'អ៊ុំ ស្រីរុំ',
+    motherJob: 'កសិករ',
+    phoneNumber: '098 765 432',
+    classTeacher: 'កែវ ច័ន្ទតារា',
+    gradeClass: 'ថ្នាក់ទី ៥ អា',
+    academicYear: '២០២៤-២០២៥'
+  },
+  {
+    id: 'STD-03',
+    nameKh: 'គង់ ពិសិដ្ឋ',
+    nameEn: 'KONG PISETH',
+    gender: 'ប្រុស',
+    dob: '២០១៥-០១-០៨',
+    pob: 'សង្កាត់ទឹកល្អក់ទី២ ខណ្ឌទួលគោក រាជធានីភ្នំពេញ',
+    pobProvince: 'ភ្នំពេញ',
+    address: 'ខណ្ឌទួលគោក រាជធានីភ្នំពេញ',
+    fatherName: 'គង់ សុជា',
+    fatherJob: 'បុគ្គលិកក្រុមហ៊ុន',
+    motherName: 'ស៊ិន វលក្ខណ៍',
+    motherJob: 'គ្រូបង្រៀន',
+    phoneNumber: '010 888 999',
+    classTeacher: 'កែវ ច័ន្ទតារា',
+    gradeClass: 'ថ្នាក់ទី ៥ អា',
+    academicYear: '២០២៤-២០២៥'
+  },
+  {
+    id: 'STD-04',
+    nameKh: 'ហេង ម៉ារីណា',
+    nameEn: 'HENG MARINA',
+    gender: 'ស្រី',
+    dob: '២០១៥-១១-៣០',
+    pob: 'ក្រុងតាខ្មៅ ខេត្តកណ្តាល',
+    pobProvince: 'កណ្តាល',
+    address: 'សង្កាត់តាខ្មៅ ក្រុងតាខ្មៅ ខេត្តកណ្តាល',
+    fatherName: 'ហេង ម៉ារ៉ា',
+    fatherJob: 'មន្ត្រីរាជការ',
+    motherName: 'យឹម ស្រីពៅ',
+    motherJob: 'លក់ដូរ',
+    phoneNumber: '011 222 333',
+    classTeacher: 'កែវ ច័ន្ទតារា',
+    gradeClass: 'ថ្នាក់ទី ៥ អា',
+    academicYear: '២០២៤-២០២៥'
+  },
+  {
+    id: 'STD-05',
+    nameKh: 'ស្រ៊ុន លីហួរ',
+    nameEn: 'SRUN LYHOUR',
+    gender: 'ប្រុស',
+    dob: '២០១៥-០៧-១៧',
+    pob: 'ឃុំស្អាងភ្នំ ស្រុកស្អាង ខេត្តកណ្តាល',
+    pobProvince: 'កណ្តាល',
+    address: 'ឃុំស្អាងភ្នំ ស្រុកស្អាង ខេត្តកណ្តាល',
+    fatherName: 'ស្រ៊ុន សុខជា',
+    fatherJob: 'កសិករ',
+    motherName: 'ម៉ៅ គឹមឡាយ',
+    motherJob: 'កសិករ',
+    phoneNumber: '077 555 666',
+    classTeacher: 'កែវ ច័ន្ទតារា',
+    gradeClass: 'ថ្នាក់ទី ៥ អា',
+    academicYear: '២០២៤-២០២៥'
+  },
+  {
+    id: 'STD-06',
+    nameKh: 'ជា សុភ័ក្ត្រ',
+    nameEn: 'CHEA SOPHEAK',
+    gender: 'ស្រី',
+    dob: '២០១៥-០៣-១៤',
+    pob: 'ឃុំព្រៃវែង ស្រុកបាភ្នំ ខេត្តព្រៃវែង',
+    pobProvince: 'ព្រៃវែង',
+    address: 'សង្កាត់ចោមចៅ ខណ្ឌពោធិ៍សែនជ័យ ភ្នំពេញ',
+    fatherName: 'ជា សុខា',
+    fatherJob: 'កម្មកររោងចក្រ',
+    motherName: 'សុខ ស្រីមុំ',
+    motherJob: 'កម្មការិនី',
+    phoneNumber: '085 444 333',
+    classTeacher: 'កែវ ច័ន្ទតារា',
+    gradeClass: 'ថ្នាក់ទី ៥ អា',
+    academicYear: '២០២៤-២០២៥'
+  }
+];
+
+export const SAMPLE_SCORES: { [studentId: string]: { [period: string]: SubjectScores } } = {
+  'STD-01': {
+    nov: { khmer: 9.0, math: 9.5, science: 9.0, social: 8.5, artsPE: 9.0 },
+    dec: { khmer: 8.5, math: 9.0, science: 8.5, social: 9.0, artsPE: 9.0 },
+    jan: { khmer: 9.0, math: 9.0, science: 9.0, social: 9.0, artsPE: 9.5 },
+    feb: { khmer: 9.5, math: 10.0, science: 9.5, social: 9.0, artsPE: 9.0 },
+    mar: { khmer: 9.0, math: 9.5, science: 9.0, social: 9.5, artsPE: 9.5 },
+    sem1_exam: { khmer: 9.0, math: 10.0, science: 9.5, social: 9.0, artsPE: 9.0 },
+    apr_may: { khmer: 9.0, math: 9.5, science: 9.0, social: 9.0, artsPE: 9.0 },
+    jun: { khmer: 8.5, math: 9.0, science: 9.0, social: 9.5, artsPE: 9.0 },
+    jul: { khmer: 9.0, math: 9.5, science: 9.5, social: 9.0, artsPE: 9.5 },
+    sem2_exam: { khmer: 9.5, math: 9.5, science: 9.0, social: 9.0, artsPE: 9.0 }
+  },
+  'STD-02': {
+    nov: { khmer: 8.5, math: 8.0, science: 8.5, social: 8.0, artsPE: 8.5 },
+    dec: { khmer: 8.0, math: 8.5, science: 8.0, social: 8.5, artsPE: 8.0 },
+    jan: { khmer: 8.5, math: 8.0, science: 8.5, social: 8.0, artsPE: 8.5 },
+    feb: { khmer: 9.0, math: 8.5, science: 8.0, social: 9.0, artsPE: 9.0 },
+    mar: { khmer: 8.5, math: 8.5, science: 9.0, social: 8.0, artsPE: 8.5 },
+    sem1_exam: { khmer: 8.5, math: 8.0, science: 8.5, social: 8.5, artsPE: 8.0 },
+    apr_may: { khmer: 8.0, math: 8.5, science: 8.0, social: 8.0, artsPE: 8.5 },
+    jun: { khmer: 8.5, math: 8.0, science: 8.5, social: 8.5, artsPE: 8.0 },
+    jul: { khmer: 9.0, math: 9.0, science: 8.5, social: 8.5, artsPE: 8.5 },
+    sem2_exam: { khmer: 8.5, math: 8.5, science: 8.0, social: 8.5, artsPE: 8.0 }
+  },
+  'STD-03': {
+    nov: { khmer: 9.5, math: 10.0, science: 9.5, social: 9.0, artsPE: 10.0 },
+    dec: { khmer: 9.0, math: 9.5, science: 9.0, social: 9.5, artsPE: 9.5 },
+    jan: { khmer: 9.5, math: 10.0, science: 9.5, social: 9.0, artsPE: 9.5 },
+    feb: { khmer: 10.0, math: 10.0, science: 10.0, social: 9.5, artsPE: 10.0 },
+    mar: { khmer: 9.5, math: 10.0, science: 10.0, social: 9.5, artsPE: 10.0 },
+    sem1_exam: { khmer: 9.5, math: 10.0, science: 10.0, social: 9.0, artsPE: 9.5 },
+    apr_may: { khmer: 9.5, math: 9.5, science: 9.5, social: 9.0, artsPE: 9.5 },
+    jun: { khmer: 9.0, math: 10.0, science: 9.5, social: 9.5, artsPE: 9.5 },
+    jul: { khmer: 9.5, math: 10.0, science: 10.0, social: 9.5, artsPE: 10.0 },
+    sem2_exam: { khmer: 10.0, math: 10.0, science: 9.5, social: 9.5, artsPE: 9.5 }
+  },
+  'STD-04': {
+    nov: { khmer: 7.0, math: 7.5, science: 7.0, social: 7.5, artsPE: 8.0 },
+    dec: { khmer: 7.5, math: 7.0, science: 7.5, social: 7.0, artsPE: 7.5 },
+    jan: { khmer: 7.0, math: 7.5, science: 7.0, social: 7.5, artsPE: 7.0 },
+    feb: { khmer: 8.0, math: 7.5, science: 7.5, social: 8.0, artsPE: 8.0 },
+    mar: { khmer: 7.5, math: 8.0, science: 8.0, social: 7.5, artsPE: 7.5 },
+    sem1_exam: { khmer: 7.5, math: 7.5, science: 7.0, social: 7.5, artsPE: 7.5 },
+    apr_may: { khmer: 7.0, math: 7.5, science: 7.5, social: 7.5, artsPE: 7.5 },
+    jun: { khmer: 7.5, math: 7.0, science: 7.0, social: 8.0, artsPE: 8.0 },
+    jul: { khmer: 8.0, math: 8.0, science: 7.5, social: 7.5, artsPE: 7.5 },
+    sem2_exam: { khmer: 7.5, math: 7.5, science: 7.5, social: 8.0, artsPE: 8.0 }
+  },
+  'STD-05': {
+    nov: { khmer: 5.5, math: 6.0, science: 5.5, social: 6.0, artsPE: 6.5 },
+    dec: { khmer: 6.0, math: 5.5, science: 6.0, social: 5.5, artsPE: 6.0 },
+    jan: { khmer: 5.5, math: 6.0, science: 5.5, social: 6.0, artsPE: 5.5 },
+    feb: { khmer: 6.5, math: 6.0, science: 6.0, social: 6.5, artsPE: 6.5 },
+    mar: { khmer: 6.0, math: 6.5, science: 6.5, social: 6.0, artsPE: 6.0 },
+    sem1_exam: { khmer: 6.0, math: 6.0, science: 5.5, social: 6.0, artsPE: 6.0 },
+    apr_may: { khmer: 6.0, math: 6.5, science: 6.0, social: 6.0, artsPE: 6.0 },
+    jun: { khmer: 6.5, math: 6.0, science: 6.0, social: 6.5, artsPE: 6.5 },
+    jul: { khmer: 6.5, math: 6.5, science: 6.5, social: 6.0, artsPE: 6.0 },
+    sem2_exam: { khmer: 6.0, math: 6.0, science: 6.0, social: 6.5, artsPE: 6.5 }
+  },
+  'STD-06': {
+    nov: { khmer: 4.5, math: 5.0, science: 4.5, social: 5.0, artsPE: 5.5 },
+    dec: { khmer: 5.0, math: 4.5, science: 5.0, social: 4.5, artsPE: 5.0 },
+    jan: { khmer: 4.5, math: 5.0, science: 4.5, social: 5.0, artsPE: 4.5 },
+    feb: { khmer: 5.5, math: 5.0, science: 5.0, social: 5.5, artsPE: 5.5 },
+    mar: { khmer: 5.0, math: 5.5, science: 5.5, social: 5.0, artsPE: 5.0 },
+    sem1_exam: { khmer: 5.0, math: 5.0, science: 4.5, social: 5.0, artsPE: 5.0 },
+    apr_may: { khmer: 5.0, math: 5.5, science: 5.0, social: 5.0, artsPE: 5.0 },
+    jun: { khmer: 5.5, math: 5.0, science: 5.0, social: 5.5, artsPE: 5.5 },
+    jul: { khmer: 5.5, math: 5.5, science: 5.5, social: 5.0, artsPE: 5.0 },
+    sem2_exam: { khmer: 5.0, math: 5.0, science: 5.0, social: 5.5, artsPE: 5.5 }
+  }
+};
+
+export const SAMPLE_ATTENDANCE: { [studentId: string]: { [month: string]: AttendanceRecord } } = {
+  'STD-01': {
+    nov: { studentId: 'STD-01', month: 'nov', excused: 1, unexcused: 0, late: 0 },
+    dec: { studentId: 'STD-01', month: 'dec', excused: 0, unexcused: 0, late: 1 },
+    jan: { studentId: 'STD-01', month: 'jan', excused: 2, unexcused: 0, late: 0 },
+    feb: { studentId: 'STD-01', month: 'feb', excused: 0, unexcused: 0, late: 0 },
+    mar: { studentId: 'STD-01', month: 'mar', excused: 1, unexcused: 0, late: 2 },
+    apr_may: { studentId: 'STD-01', month: 'apr_may', excused: 0, unexcused: 1, late: 0 },
+    jun: { studentId: 'STD-01', month: 'jun', excused: 0, unexcused: 0, late: 0 },
+    jul: { studentId: 'STD-01', month: 'jul', excused: 1, unexcused: 0, late: 1 }
+  },
+  'STD-02': {
+    nov: { studentId: 'STD-02', month: 'nov', excused: 0, unexcused: 0, late: 1 },
+    dec: { studentId: 'STD-02', month: 'dec', excused: 1, unexcused: 0, late: 0 },
+    jan: { studentId: 'STD-02', month: 'jan', excused: 0, unexcused: 1, late: 0 },
+    feb: { studentId: 'STD-02', month: 'feb', excused: 0, unexcused: 0, late: 1 },
+    mar: { studentId: 'STD-02', month: 'mar', excused: 1, unexcused: 0, late: 0 },
+    apr_may: { studentId: 'STD-02', month: 'apr_may', excused: 2, unexcused: 0, late: 0 },
+    jun: { studentId: 'STD-02', month: 'jun', excused: 0, unexcused: 0, late: 0 },
+    jul: { studentId: 'STD-02', month: 'jul', excused: 0, unexcused: 0, late: 1 }
+  },
+  'STD-03': {
+    nov: { studentId: 'STD-03', month: 'nov', excused: 0, unexcused: 0, late: 0 },
+    dec: { studentId: 'STD-03', month: 'dec', excused: 0, unexcused: 0, late: 0 },
+    jan: { studentId: 'STD-03', month: 'jan', excused: 0, unexcused: 0, late: 0 },
+    feb: { studentId: 'STD-03', month: 'feb', excused: 0, unexcused: 0, late: 0 },
+    mar: { studentId: 'STD-03', month: 'mar', excused: 0, unexcused: 0, late: 0 },
+    apr_may: { studentId: 'STD-03', month: 'apr_may', excused: 1, unexcused: 0, late: 0 },
+    jun: { studentId: 'STD-03', month: 'jun', excused: 0, unexcused: 0, late: 0 },
+    jul: { studentId: 'STD-03', month: 'jul', excused: 0, unexcused: 0, late: 0 }
+  },
+  'STD-04': {
+    nov: { studentId: 'STD-04', month: 'nov', excused: 1, unexcused: 0, late: 2 },
+    dec: { studentId: 'STD-04', month: 'dec', excused: 2, unexcused: 1, late: 0 },
+    jan: { studentId: 'STD-04', month: 'jan', excused: 0, unexcused: 0, late: 1 },
+    feb: { studentId: 'STD-04', month: 'feb', excused: 0, unexcused: 0, late: 0 },
+    mar: { studentId: 'STD-04', month: 'mar', excused: 1, unexcused: 0, late: 0 },
+    apr_may: { studentId: 'STD-04', month: 'apr_may', excused: 3, unexcused: 0, late: 1 },
+    jun: { studentId: 'STD-04', month: 'jun', excused: 0, unexcused: 0, late: 0 },
+    jul: { studentId: 'STD-04', month: 'jul', excused: 1, unexcused: 1, late: 0 }
+  },
+  'STD-05': {
+    nov: { studentId: 'STD-05', month: 'nov', excused: 2, unexcused: 1, late: 1 },
+    dec: { studentId: 'STD-05', month: 'dec', excused: 1, unexcused: 2, late: 0 },
+    jan: { studentId: 'STD-05', month: 'jan', excused: 0, unexcused: 1, late: 2 },
+    feb: { studentId: 'STD-05', month: 'feb', excused: 1, unexcused: 0, late: 1 },
+    mar: { studentId: 'STD-05', month: 'mar', excused: 2, unexcused: 1, late: 0 },
+    apr_may: { studentId: 'STD-05', month: 'apr_may', excused: 1, unexcused: 0, late: 0 },
+    jun: { studentId: 'STD-05', month: 'jun', excused: 0, unexcused: 2, late: 1 },
+    jul: { studentId: 'STD-05', month: 'jul', excused: 2, unexcused: 1, late: 0 }
+  },
+  'STD-06': {
+    nov: { studentId: 'STD-06', month: 'nov', excused: 3, unexcused: 2, late: 2 },
+    dec: { studentId: 'STD-06', month: 'dec', excused: 2, unexcused: 1, late: 3 },
+    jan: { studentId: 'STD-06', month: 'jan', excused: 1, unexcused: 3, late: 1 },
+    feb: { studentId: 'STD-06', month: 'feb', excused: 2, unexcused: 1, late: 2 },
+    mar: { studentId: 'STD-06', month: 'mar', excused: 3, unexcused: 2, late: 1 },
+    apr_may: { studentId: 'STD-06', month: 'apr_may', excused: 4, unexcused: 1, late: 2 },
+    jun: { studentId: 'STD-06', month: 'jun', excused: 2, unexcused: 3, late: 4 },
+    jul: { studentId: 'STD-06', month: 'jul', excused: 3, unexcused: 2, late: 1 }
+  }
+};
