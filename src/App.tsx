@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Student, SubjectScores, AttendanceRecord, AppData, AcademicPeriod } from './types';
 import { SAMPLE_STUDENTS, SAMPLE_SCORES, SAMPLE_ATTENDANCE } from './sampleData';
+import { exportStudentProfilesToCSV, exportCumulativeGradesToCSV, exportCumulativeAttendanceToCSV } from './utils';
 
 // Modular Tab Components
 import StudentsTab from './components/StudentsTab';
@@ -582,6 +583,84 @@ export default function App() {
               </div>
 
             </div>
+
+            {/* Consolidated Excel/CSV Export Tools Panel */}
+            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 pb-3 gap-2">
+                <div className="space-y-0.5">
+                  <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                    <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
+                    ទាញយករបាយការណ៍រួមសម្រាប់ Excel / Google Sheets (Excel Integration Tools)
+                  </h3>
+                  <p className="text-xs text-gray-400">
+                    នាំចេញទិន្នន័យរួមទូទាំងឆ្នាំសិក្សា ដើម្បីបើកវិភាគលម្អិតបន្ថែមលើកម្មវិធី Excel ឬ Google Sheets ដោយសុវត្ថិភាព និងរក្សាអក្សរខ្មែរឲ្យត្រឹមត្រូវ
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* 1. Export Profiles */}
+                <button
+                  type="button"
+                  onClick={() => exportStudentProfilesToCSV(appData.students, appData.classInfo)}
+                  disabled={appData.students.length === 0}
+                  className="p-4 border border-emerald-100 bg-emerald-50/10 hover:bg-emerald-50 rounded-xl transition-all text-left space-y-2 group cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-xs font-sans"
+                >
+                  <div className="bg-emerald-600 text-white w-9 h-9 rounded-lg flex items-center justify-center shadow-sm">
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-800 text-xs sm:text-sm group-hover:text-emerald-700 transition-colors">
+                      នាំចេញបញ្ជីប្រវត្តិរូបសិស្ស
+                    </h4>
+                    <p className="text-[11px] text-gray-400 mt-1">
+                      នាំចេញព័ត៌មានអត្តសញ្ញាណ ភេទ ថ្ងៃខែ និងព័ត៌មានអាណាព្យាបាលសិស្សទាំងអស់
+                    </p>
+                  </div>
+                </button>
+
+                {/* 2. Export Grades */}
+                <button
+                  type="button"
+                  onClick={() => exportCumulativeGradesToCSV(appData.students, appData.scores, appData.classInfo)}
+                  disabled={appData.students.length === 0}
+                  className="p-4 border border-indigo-100 bg-indigo-50/10 hover:bg-indigo-50 rounded-xl transition-all text-left space-y-2 group cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-xs font-sans"
+                >
+                  <div className="bg-indigo-600 text-white w-9 h-9 rounded-lg flex items-center justify-center shadow-sm">
+                    <FileSpreadsheet className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-800 text-xs sm:text-sm group-hover:text-indigo-700 transition-colors">
+                      នាំចេញតារាងពិន្ទុរួមប្រចាំឆ្នាំ
+                    </h4>
+                    <p className="text-[11px] text-gray-400 mt-1">
+                      នាំចេញពិន្ទុមធ្យមភាគប្រចាំខែ ឆមាស និងពិន្ទុសរុបដំណាច់ឆ្នាំរួមលំដាប់ថ្នាក់សិស្ស
+                    </p>
+                  </div>
+                </button>
+
+                {/* 3. Export Attendance */}
+                <button
+                  type="button"
+                  onClick={() => exportCumulativeAttendanceToCSV(appData.students, appData.attendance, appData.classInfo)}
+                  disabled={appData.students.length === 0}
+                  className="p-4 border border-rose-100 bg-rose-50/10 hover:bg-rose-50 rounded-xl transition-all text-left space-y-2 group cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-xs font-sans"
+                >
+                  <div className="bg-rose-600 text-white w-9 h-9 rounded-lg flex items-center justify-center shadow-sm">
+                    <CalendarCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-800 text-xs sm:text-sm group-hover:text-rose-700 transition-colors">
+                      នាំចេញតារាងវត្តមានរួមប្រចាំឆ្នាំ
+                    </h4>
+                    <p className="text-[11px] text-gray-400 mt-1">
+                      នាំចេញចំនួនអវត្តមានមានច្បាប់ អត់ច្បាប់ និងយឺតរបស់សិស្សសរុបទូទាំងឆ្នាំសិក្សា
+                    </p>
+                  </div>
+                </button>
+              </div>
+            </div>
+
           </div>
         )}
 

@@ -18,17 +18,97 @@ export const SUBJECT_NAMES: { value: keyof SubjectScores; labelKh: string; label
   { value: 'math', labelKh: 'គណិតវិទ្យា', labelEn: 'Mathematics' },
   { value: 'science', labelKh: 'វិទ្យាសាស្ត្រ', labelEn: 'Science' },
   { value: 'social', labelKh: 'សិក្សាសង្គម', labelEn: 'Social Studies' },
-  { value: 'artsPE', labelKh: 'អប់រំកាយ/សិល្បៈ', labelEn: 'Arts & PE' },
+  { value: 'artsPE', labelKh: 'អប់រំកាយនិងកីឡា', labelEn: 'Physical Education & Sports' },
+  { value: 'lifeSkills', labelKh: 'បំណិន', labelEn: 'Life Skills' },
+  { value: 'foreignLanguage', labelKh: 'ភាសាបរទេស', labelEn: 'Foreign Language' },
 ];
 
+export interface SubSubjectInfo {
+  value: keyof SubjectScores;
+  labelKh: string;
+  labelEn: string;
+}
+
+export const SUB_SUBJECTS: { [parentKey in 'khmer' | 'math' | 'social']: SubSubjectInfo[] } = {
+  khmer: [
+    { value: 'khmerReading', labelKh: 'រៀនអាន', labelEn: 'Reading' },
+    { value: 'khmerDictation', labelKh: 'សរសេរតាមអាន', labelEn: 'Dictation' },
+    { value: 'khmerComposition', labelKh: 'តែងសេចក្តី', labelEn: 'Composition' }
+  ],
+  math: [
+    { value: 'mathNumbers', labelKh: 'ចំនួន', labelEn: 'Numbers' },
+    { value: 'mathMeasurement', labelKh: 'រង្វាស់រង្វាល់', labelEn: 'Measurement' },
+    { value: 'mathGeometry', labelKh: 'ធរណីមាត្រ', labelEn: 'Geometry' },
+    { value: 'mathAlgebra', labelKh: 'ពីជគណិត', labelEn: 'Algebra' },
+    { value: 'mathStatistics', labelKh: 'ស្ថិតិ', labelEn: 'Statistics' }
+  ],
+  social: [
+    { value: 'socialCivics', labelKh: 'សីលធម៌-ពលរដ្ឋ', labelEn: 'Morals & Civics' },
+    { value: 'socialGeography', labelKh: 'ភូមិវិទ្យា', labelEn: 'Geography' },
+    { value: 'socialHistory', labelKh: 'ប្រវត្តិវិទ្យា', labelEn: 'History' },
+    { value: 'socialArts', labelKh: 'សិល្បៈ', labelEn: 'Arts & Craft' }
+  ]
+};
+
 export const MONTH_LIST = ['nov', 'dec', 'jan', 'feb', 'mar', 'apr_may', 'jun', 'jul'];
+
+export function computeParentSubjectAverages(scores: SubjectScores): SubjectScores {
+  const result = { ...scores };
+
+  // Calculate Khmer from sub-subjects
+  const khmerSubs = [scores.khmerReading, scores.khmerDictation, scores.khmerComposition].filter(v => v !== undefined);
+  if (khmerSubs.length > 0) {
+    const sum = khmerSubs.reduce((a, b) => a! + b!, 0) || 0;
+    result.khmer = Math.round((sum / khmerSubs.length) * 100) / 100;
+  }
+
+  // Calculate Math from sub-subjects
+  const mathSubs = [scores.mathNumbers, scores.mathMeasurement, scores.mathGeometry, scores.mathAlgebra, scores.mathStatistics].filter(v => v !== undefined);
+  if (mathSubs.length > 0) {
+    const sum = mathSubs.reduce((a, b) => a! + b!, 0) || 0;
+    result.math = Math.round((sum / mathSubs.length) * 100) / 100;
+  }
+
+  // Calculate Social from sub-subjects
+  const socialSubs = [scores.socialCivics, scores.socialGeography, scores.socialHistory, scores.socialArts].filter(v => v !== undefined);
+  if (socialSubs.length > 0) {
+    const sum = socialSubs.reduce((a, b) => a! + b!, 0) || 0;
+    result.social = Math.round((sum / socialSubs.length) * 100) / 100;
+  }
+
+  return result;
+}
 
 export function calculateRecordMetrics(scores: SubjectScores | undefined) {
   if (!scores) {
     return { sum: 0, average: 0 };
   }
-  const sum = (scores.khmer || 0) + (scores.math || 0) + (scores.science || 0) + (scores.social || 0) + (scores.artsPE || 0);
-  const average = sum / 5;
+  
+  // Compute parent fields first if sub-scores are entered
+  const syncedScores = computeParentSubjectAverages(scores);
+  
+  // Core subjects are always included
+  const coreSubjects: (keyof SubjectScores)[] = ['khmer', 'math', 'science', 'social', 'artsPE'];
+  let sum = 0;
+  let count = 0;
+
+  coreSubjects.forEach((sub) => {
+    const val = syncedScores[sub];
+    sum += (typeof val === 'number' ? val : 0);
+    count++;
+  });
+
+  // Additional subjects are optionally included if they are not undefined
+  const extraSubjects: (keyof SubjectScores)[] = ['lifeSkills', 'foreignLanguage'];
+  extraSubjects.forEach((sub) => {
+    const val = syncedScores[sub];
+    if (val !== undefined) {
+      sum += val;
+      count++;
+    }
+  });
+
+  const average = count > 0 ? sum / count : 0;
   return { sum, average };
 }
 
@@ -323,6 +403,189 @@ export function exportToCSV(filename: string, headers: string[], rows: (string |
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+}
+
+export function exportStudentProfilesToCSV(
+  students: Student[],
+  classInfo: { gradeClass: string; academicYear: string }
+) {
+  const headers = [
+    'ល.រ (No)',
+    'អត្តសញ្ញាណ (Student ID)',
+    'ឈ្មោះខ្មែរ (Name Khmer)',
+    'ឈ្មោះឡាតាំង (Name English)',
+    'ភេទ (Gender)',
+    'ថ្ងៃខែឆ្នាំកំណើត (Date of Birth)',
+    'ខេត្តកំណើត (POB Province)',
+    'ទីកន្លែងកំណើត (POB Detail)',
+    'អាសយដ្ឋានបច្ចុប្បន្ន (Current Address)',
+    'ឈ្មោះឪពុក (Father Name)',
+    'មុខរបរឪពុក (Father Job)',
+    'ឈ្មោះម្តាយ (Mother Name)',
+    'មុខរបរម្តាយ (Mother Job)',
+    'លេខទូរស័ព្ទ (Phone Number)'
+  ];
+
+  const rows = students.map((s, index) => [
+    index + 1,
+    s.id,
+    s.nameKh,
+    s.nameEn,
+    s.gender,
+    s.dob || '—',
+    s.pobProvince || '—',
+    s.pob || '—',
+    s.address || '—',
+    s.fatherName || '—',
+    s.fatherJob || '—',
+    s.motherName || '—',
+    s.motherJob || '—',
+    s.phoneNumber || '—'
+  ]);
+
+  const filename = `ប្រវត្តិរូបសិស្សរួម_ថ្នាក់_${classInfo.gradeClass.replace(/\s+/g, '_')}_ឆ្នាំ_${classInfo.academicYear.replace(/\s+/g, '_')}.csv`;
+  exportToCSV(filename, headers, rows);
+}
+
+export function exportCumulativeGradesToCSV(
+  students: Student[],
+  scoresData: { [studentId: string]: { [period in AcademicPeriod]?: SubjectScores } },
+  classInfo: { gradeClass: string; academicYear: string }
+) {
+  const headers = [
+    'ល.រ (No)',
+    'អត្តសញ្ញាណ (Student ID)',
+    'ឈ្មោះខ្មែរ (Name Khmer)',
+    'ឈ្មោះឡាតាំង (Name English)',
+    'ភេទ (Gender)',
+    'មធ្យមភាគ វិច្ឆិកា (Nov Avg)',
+    'មធ្យមភាគ ធ្នូ (Dec Avg)',
+    'មធ្យមភាគ មករា (Jan Avg)',
+    'មធ្យមភាគ កុម្ភៈ (Feb Avg)',
+    'មធ្យមភាគ មីនា (Mar Avg)',
+    'ប្រឡងឆមាសទី១ (Sem1 Exam)',
+    'មធ្យមភាគ ឆមាសទី១ (Sem1 Avg)',
+    'ចំណាត់ថ្នាក់ ឆមាសទី១ (Sem1 Rank)',
+    'មធ្យមភាគ មេសា+ឧសភា (Apr+May Avg)',
+    'មធ្យមភាគ មិថុនា (Jun Avg)',
+    'មធ្យមភាគ កក្កដា (Jul Avg)',
+    'ប្រឡងឆមាសទី២ (Sem2 Exam)',
+    'មធ្យមភាគ ឆមាសទី២ (Sem2 Avg)',
+    'ចំណាត់ថ្នាក់ ឆមាសទី២ (Sem2 Rank)',
+    'មធ្យមភាគដំណាច់ឆ្នាំ (Year End Avg)',
+    'ចំណាត់ថ្នាក់ដំណាច់ឆ្នាំ (Year End Rank)',
+    'លទ្ធផល (Result)',
+    'ការវាយតម្លៃ (Mention)'
+  ];
+
+  const fullSummary = calculateFullAcademicSummary(students, scoresData);
+
+  const rows = students.map((student, index) => {
+    const sSummary = fullSummary.find(x => x.studentId === student.id);
+    
+    const getPeriodAvg = (p: AcademicPeriod) => {
+      const s = scoresData[student.id]?.[p];
+      if (!s) return '—';
+      const { average } = calculateRecordMetrics(s);
+      return average.toFixed(2);
+    };
+
+    const s1AvgVal = sSummary?.s1Avg || 0;
+    const s2AvgVal = sSummary?.s2Avg || 0;
+    const yearEndAvgVal = sSummary?.yearEndAvg || 0;
+
+    const resultText = yearEndAvgVal >= 5.0 ? 'ជាប់ (Passed)' : 'ធ្លាក់ (Retained)';
+    const mention = getMention(yearEndAvgVal);
+
+    return [
+      index + 1,
+      student.id,
+      student.nameKh,
+      student.nameEn,
+      student.gender,
+      getPeriodAvg('nov'),
+      getPeriodAvg('dec'),
+      getPeriodAvg('jan'),
+      getPeriodAvg('feb'),
+      getPeriodAvg('mar'),
+      getPeriodAvg('sem1_exam'),
+      s1AvgVal > 0 ? s1AvgVal.toFixed(2) : '—',
+      sSummary?.s1Rank && sSummary.s1Rank > 0 ? sSummary.s1Rank : '—',
+      getPeriodAvg('apr_may'),
+      getPeriodAvg('jun'),
+      getPeriodAvg('jul'),
+      getPeriodAvg('sem2_exam'),
+      s2AvgVal > 0 ? s2AvgVal.toFixed(2) : '—',
+      sSummary?.s2Rank && sSummary.s2Rank > 0 ? sSummary.s2Rank : '—',
+      yearEndAvgVal > 0 ? yearEndAvgVal.toFixed(2) : '—',
+      sSummary?.yearEndRank && sSummary.yearEndRank > 0 ? sSummary.yearEndRank : '—',
+      yearEndAvgVal > 0 ? resultText : '—',
+      yearEndAvgVal > 0 ? mention : '—'
+    ];
+  });
+
+  const filename = `របាយការណ៍ពិន្ទុរួម_ថ្នាក់_${classInfo.gradeClass.replace(/\s+/g, '_')}_ឆ្នាំ_${classInfo.academicYear.replace(/\s+/g, '_')}.csv`;
+  exportToCSV(filename, headers, rows);
+}
+
+export function exportCumulativeAttendanceToCSV(
+  students: Student[],
+  attendanceData: { [studentId: string]: { [month: string]: AttendanceRecord } },
+  classInfo: { gradeClass: string; academicYear: string }
+) {
+  const headers = [
+    'ល.រ (No)',
+    'អត្តសញ្ញាណ (Student ID)',
+    'ឈ្មោះខ្មែរ (Name Khmer)',
+    'ឈ្មោះឡាតាំង (Name English)',
+    'ភេទ (Gender)',
+    'វិច្ឆិកា_ច្បាប់ (Nov Excused)', 'វិច្ឆិកា_អត់ច្បាប់ (Nov Unexcused)', 'វិច្ឆិកា_យឺត (Nov Late)',
+    'ធ្នូ_ច្បាប់ (Dec Excused)', 'ធ្នូ_អត់ច្បាប់ (Dec Unexcused)', 'ធ្នូ_យឺត (Dec Late)',
+    'មករា_ច្បាប់ (Jan Excused)', 'មករា_អត់ច្បាប់ (Jan Unexcused)', 'មករា_យឺត (Jan Late)',
+    'កុម្ភៈ_ច្បាប់ (Feb Excused)', 'កុម្ភៈ_អត់ច្បាប់ (Feb Unexcused)', 'កុម្ភៈ_យឺត (Feb Late)',
+    'មីនា_ច្បាប់ (Mar Excused)', 'មីនា_អត់ច្បាប់ (Mar Unexcused)', 'មីនា_យឺត (Mar Late)',
+    'មេសា+ឧសភា_ច្បាប់ (Apr+May Exc)', 'មេសា+ឧសភា_អត់ច្បាប់ (Apr+May Unexc)', 'មេសា+ឧសភា_យឺត (Apr+May Late)',
+    'មិថុនា_ច្បាប់ (Jun Excused)', 'មិថុនា_អត់ច្បាប់ (Jun Unexcused)', 'មិថុនា_យឺត (Jun Late)',
+    'កក្កដា_ច្បាប់ (Jul Excused)', 'កក្កដា_អត់ច្បាប់ (Jul Unexcused)', 'កក្កដា_យឺត (Jul Late)',
+    'សរុប_ច្បាប់ (Total Excused)', 'សរុប_អត់ច្បាប់ (Total Unexcused)', 'សរុប_យឺត (Total Late)'
+  ];
+
+  const months = ['nov', 'dec', 'jan', 'feb', 'mar', 'apr_may', 'jun', 'jul'];
+
+  const rows = students.map((student, index) => {
+    const studentAtt = attendanceData[student.id] || {};
+    
+    const monthCols: number[] = [];
+    let totExcused = 0;
+    let totUnexcused = 0;
+    let totLate = 0;
+
+    months.forEach((m) => {
+      const record = studentAtt[m] || { excused: 0, unexcused: 0, late: 0 };
+      monthCols.push(record.excused || 0);
+      monthCols.push(record.unexcused || 0);
+      monthCols.push(record.late || 0);
+
+      totExcused += record.excused || 0;
+      totUnexcused += record.unexcused || 0;
+      totLate += record.late || 0;
+    });
+
+    return [
+      index + 1,
+      student.id,
+      student.nameKh,
+      student.nameEn,
+      student.gender,
+      ...monthCols,
+      totExcused,
+      totUnexcused,
+      totLate
+    ];
+  });
+
+  const filename = `របាយការណ៍អវត្តមានរួម_ថ្នាក់_${classInfo.gradeClass.replace(/\s+/g, '_')}_ឆ្នាំ_${classInfo.academicYear.replace(/\s+/g, '_')}.csv`;
+  exportToCSV(filename, headers, rows);
 }
 
 export function exportToWord(filename: string, docTitle: string, htmlBody: string) {

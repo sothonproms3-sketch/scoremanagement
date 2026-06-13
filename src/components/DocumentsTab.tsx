@@ -54,6 +54,12 @@ export default function DocumentsTab({ students, scores, attendance, classInfo }
 
     if (docType === 'tracker') {
       let monthlyTableRows = '';
+      
+      let wordHeadersHtml = '';
+      SUBJECT_NAMES.forEach(sub => {
+        wordHeadersHtml += `<th>${sub.labelKh}</th>`;
+      });
+
       PERIODS.forEach((p) => {
         const periodKey = p.value;
         const periodScores = scores[selectedStudentId]?.[periodKey];
@@ -62,14 +68,16 @@ export default function DocumentsTab({ students, scores, attendance, classInfo }
         const hasScoresEntered = !!scores[selectedStudentId]?.[periodKey];
         const rankNum = rankingsByPeriod && calculateRankings(students, scores)[periodKey]?.[selectedStudentId]?.rank || 0;
 
+        let subjectScoresRowHtml = '';
+        SUBJECT_NAMES.forEach(sub => {
+          const val = periodScores?.[sub.value];
+          subjectScoresRowHtml += `<td>${hasScoresEntered && val !== undefined ? val.toFixed(1) : '—'}</td>`;
+        });
+
         monthlyTableRows += `
           <tr>
             <td style="text-align: left;"><b>${p.labelKh}</b> ${p.isExam ? '🏆' : ''}</td>
-            <td>${hasScoresEntered ? periodScores.khmer.toFixed(1) : '—'}</td>
-            <td>${hasScoresEntered ? periodScores.math.toFixed(1) : '—'}</td>
-            <td>${hasScoresEntered ? periodScores.science.toFixed(1) : '—'}</td>
-            <td>${hasScoresEntered ? periodScores.social.toFixed(1) : '—'}</td>
-            <td>${hasScoresEntered ? periodScores.artsPE.toFixed(1) : '—'}</td>
+            ${subjectScoresRowHtml}
             <td><b>${hasScoresEntered ? sum.toFixed(1) : '—'}</b></td>
             <td><b>${hasScoresEntered ? average.toFixed(2) : '—'}</b></td>
             <td><b>${hasScoresEntered && rankNum > 0 ? rankNum : '—'}</b></td>
@@ -116,7 +124,7 @@ export default function DocumentsTab({ students, scores, attendance, classInfo }
           <thead>
             <tr>
               <th rowspan="2">រដូវកាលសិក្សា</th>
-              <th colspan="5">ពិន្ទុតាមមុខវិជ្ជា (Subject Scores)</th>
+              <th colspan="${SUBJECT_NAMES.length}">ពិន្ទុតាមមុខវិជ្ជា (Subject Scores)</th>
               <th rowspan="2">សរុប</th>
               <th rowspan="2">មធ្យមភាគ</th>
               <th rowspan="2">ចំណាត់លេខ</th>
@@ -124,11 +132,7 @@ export default function DocumentsTab({ students, scores, attendance, classInfo }
               <th rowspan="2">សេចក្តីសង្កេត និងការវាយតម្លៃរបស់អ្នកគ្រូ</th>
             </tr>
             <tr>
-              <th>ភាសាខ្មែរ</th>
-              <th>គណិតវិទ្យា</th>
-              <th>វិទ្យាសាស្ត្រ</th>
-              <th>សិក្សាសង្គម</th>
-              <th>សិល្បៈ/PE</th>
+              ${wordHeadersHtml}
               <th>ច្បាប់</th>
               <th>ឥតច្បាប់</th>
               <th>យឺត</th>
@@ -138,7 +142,7 @@ export default function DocumentsTab({ students, scores, attendance, classInfo }
             ${monthlyTableRows}
             <tr style="background-color: #e0f2fe; font-weight: bold;">
               <td style="text-align: left;"><b>ឆមាសទី១</b></td>
-              <td colspan="5">—</td>
+              <td colspan="${SUBJECT_NAMES.length}">—</td>
               <td>—</td>
               <td><b>${studentSummary ? studentSummary.s1Avg.toFixed(2) : '0.00'}</b></td>
               <td><b>${studentSummary && studentSummary.s1Rank > 0 ? studentSummary.s1Rank : '—'}</b></td>
@@ -147,7 +151,7 @@ export default function DocumentsTab({ students, scores, attendance, classInfo }
             </tr>
             <tr style="background-color: #e0f2fe; font-weight: bold;">
               <td style="text-align: left;"><b>ឆមាសទី២</b></td>
-              <td colspan="5">—</td>
+              <td colspan="${SUBJECT_NAMES.length}">—</td>
               <td>—</td>
               <td><b>${studentSummary ? studentSummary.s2Avg.toFixed(2) : '0.00'}</b></td>
               <td><b>${studentSummary && studentSummary.s2Rank > 0 ? studentSummary.s2Rank : '—'}</b></td>
@@ -156,7 +160,7 @@ export default function DocumentsTab({ students, scores, attendance, classInfo }
             </tr>
             <tr style="background-color: #fef3c7; font-weight: bold;">
               <td style="text-align: left;"><b>លទ្ធផលប្រចាំឆ្នាំ</b></td>
-              <td colspan="5">—</td>
+              <td colspan="${SUBJECT_NAMES.length}">—</td>
               <td>—</td>
               <td><b>${studentSummary ? studentSummary.yearEndAvg.toFixed(2) : '0.00'}</b></td>
               <td><b>${studentSummary && studentSummary.yearEndRank > 0 ? studentSummary.yearEndRank : '—'}</b></td>
@@ -363,7 +367,7 @@ export default function DocumentsTab({ students, scores, attendance, classInfo }
               <thead>
                 <tr className="bg-gray-100 text-gray-700 font-bold border-b border-gray-300 text-center font-semibold">
                   <th rowSpan={2} className="px-3 py-3 border-r border-gray-300 w-24">រដូវកាលសិក្សា</th>
-                  <th colSpan={5} className="px-2 py-1.5 border-b border-r border-gray-300">ពិន្ទុតាមមុខវិជ្ជា (Subject Scores)</th>
+                  <th colSpan={SUBJECT_NAMES.length} className="px-2 py-1.5 border-b border-r border-gray-300">ពិន្ទុតាមមុខវិជ្ជា (Subject Scores)</th>
                   <th rowSpan={2} className="px-2.5 py-3 border-r border-gray-300 w-16 text-indigo-750 font-bold bg-indigo-50/50">ពិន្ទុសរុប</th>
                   <th rowSpan={2} className="px-2.5 py-3 border-r border-gray-300 w-16 text-indigo-900 font-bold bg-indigo-50/10">មធ្យមភាគ</th>
                   <th rowSpan={2} className="px-2 py-3 border-r border-gray-300 w-12 text-gray-700 font-semibold">ចំណាត់ថ្នាក់</th>
@@ -371,11 +375,11 @@ export default function DocumentsTab({ students, scores, attendance, classInfo }
                   <th rowSpan={2} className="px-3 py-3 w-48 text-left font-semibold">សេចក្តីសង្កេត និងការវាយតម្លៃរបស់អ្នកគ្រូ</th>
                 </tr>
                 <tr className="bg-gray-550 text-gray-650 border-b border-gray-300 text-center font-semibold">
-                  <th className="px-1 py-2 border-r border-gray-350 font-sans font-bold">ភាសាខ្មែរ</th>
-                  <th className="px-1 py-2 border-r border-gray-350 font-sans font-bold">គណិតវិទ្យា</th>
-                  <th className="px-1 py-2 border-r border-gray-350 font-sans font-bold">វិទ្យាសាស្ត្រ</th>
-                  <th className="px-1 py-2 border-r border-gray-350 font-sans font-bold">សិក្សាសង្គម</th>
-                  <th className="px-1 py-2 border-r border-gray-300 font-sans font-semibold">អប់រំកាយ/សិល្បៈ</th>
+                  {SUBJECT_NAMES.map((sub) => (
+                    <th key={sub.value} className="px-1 py-2 border-r border-gray-350 font-sans font-bold">
+                      {sub.labelKh}
+                    </th>
+                  ))}
                   
                   <th className="px-1 py-2 border-r border-gray-300 bg-green-50/10 font-sans">ច្បាប់ (P)</th>
                   <th className="px-1 py-2 border-r border-gray-300 bg-rose-50/10 font-sans">ឥតច្បាប់ (A)</th>
@@ -446,7 +450,7 @@ export default function DocumentsTab({ students, scores, attendance, classInfo }
                   <td className="px-3 py-2.5 text-left border-r border-gray-300 font-extrabold text-indigo-900 uppercase">
                     ឆមាសទី១ (Semester 1)
                   </td>
-                  <td colSpan={5} className="px-2 py-2.5 border-r border-gray-300 text-gray-400 italic font-normal text-left text-[10px]">
+                  <td colSpan={SUBJECT_NAMES.length} className="px-2 py-2.5 border-r border-gray-300 text-gray-400 italic font-normal text-left text-[10px]">
                     មធ្យមភាគរួម calculated: (មធ្យមភាគ៥ខែ + ប្រឡង)/២
                   </td>
                   <td className="px-2 py-2.5 border-r border-gray-300 text-center font-mono"> — </td>
@@ -468,7 +472,7 @@ export default function DocumentsTab({ students, scores, attendance, classInfo }
                   <td className="px-3 py-2.5 text-left border-r border-gray-300 font-extrabold text-indigo-900 uppercase">
                     ឆមាសទី២ (Semester 2)
                   </td>
-                  <td colSpan={5} className="px-2 py-2.5 border-r border-gray-300 text-gray-400 italic font-normal text-left text-[10px]">
+                  <td colSpan={SUBJECT_NAMES.length} className="px-2 py-2.5 border-r border-gray-300 text-gray-400 italic font-normal text-left text-[10px]">
                     មធ្យមភាគរួម calculated: (មធ្យមភាគ៣ខែ + ប្រឡង)/២
                   </td>
                   <td className="px-2 py-2.5 border-r border-gray-300 text-center font-mono"> — </td>
@@ -491,7 +495,7 @@ export default function DocumentsTab({ students, scores, attendance, classInfo }
                   <td className="px-3 py-3 text-left border-r border-gray-300 font-extrabold text-amber-950 flex items-center gap-1">
                     <Award className="w-4 h-4 text-amber-600" /> ដំណាច់ឆ្នាំ (Year End)
                   </td>
-                  <td colSpan={5} className="px-2 py-3 border-r border-gray-300 text-amber-900 italic font-semibold text-left text-[10px]">
+                  <td colSpan={SUBJECT_NAMES.length} className="px-2 py-3 border-r border-gray-300 text-amber-900 italic font-semibold text-left text-[10px]">
                     រូបមន្ត MoEYS: (ឆមាសទី១ + ឆមាសទី២) / ២
                   </td>
                   <td className="px-2 py-3 border-r border-gray-300 text-center font-mono"> — </td>

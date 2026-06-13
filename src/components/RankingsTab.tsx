@@ -25,7 +25,14 @@ export default function RankingsTab({ students, scores }: RankingsTabProps) {
   const rankedStudents = rankedStudentIds.map(id => {
     const student = students.find(s => s.id === id)!;
     const stats = currentPeriodRankings[id];
-    const studentScores = scores[id]?.[selectedPeriod] || { khmer: 0, math: 0, science: 0, social: 0, artsPE: 0 };
+    const studentScores = {
+      khmer: 0,
+      math: 0,
+      science: 0,
+      social: 0,
+      artsPE: 0,
+      ...scores[id]?.[selectedPeriod]
+    };
     return {
       student,
       stats,
@@ -48,11 +55,7 @@ export default function RankingsTab({ students, scores }: RankingsTabProps) {
       'ឈ្មោះខ្មែរ (Khmer Name)',
       'ឈ្មោះឡាតាំង (Latin Name)',
       'ភេទ (Gender)',
-      'ភាសាខ្មែរ (Khmer)',
-      'គណិតវិទ្យា (Math)',
-      'វិទ្យាសាស្ត្រ (Science)',
-      'សិក្សាសង្គម (Social)',
-      'អប់រំកាយ/សិល្បៈ (Arts/PE)',
+      ...SUBJECT_NAMES.map(sub => `${sub.labelKh} (${sub.labelEn})`),
       'ពិន្ទុសរុប (Total Sum)',
       'មធ្យមភាគ (Average)',
       'និទ្ទេស (Mention)'
@@ -64,11 +67,10 @@ export default function RankingsTab({ students, scores }: RankingsTabProps) {
       rs.student.nameKh,
       rs.student.nameEn,
       rs.student.gender,
-      rs.scores.khmer,
-      rs.scores.math,
-      rs.scores.science,
-      rs.scores.social,
-      rs.scores.artsPE,
+      ...SUBJECT_NAMES.map(sub => {
+        const val = rs.scores[sub.value];
+        return val !== undefined ? val.toFixed(1) : '—';
+      }),
       rs.stats.sum.toFixed(1),
       rs.stats.average.toFixed(2),
       getMention(rs.stats.average)
@@ -95,8 +97,20 @@ export default function RankingsTab({ students, scores }: RankingsTabProps) {
       console.warn(e);
     }
 
+    let headersHtml = '';
+    SUBJECT_NAMES.forEach(sub => {
+      headersHtml += `<th>${sub.labelKh}</th>`;
+    });
+
     let tableRows = '';
     rankedStudents.forEach((rs) => {
+      let subjectsHtml = '';
+      SUBJECT_NAMES.forEach(sub => {
+        const val = rs.scores[sub.value];
+        const displayVal = val !== undefined ? val.toFixed(1) : '—';
+        subjectsHtml += `<td>${displayVal}</td>`;
+      });
+
       tableRows += `
         <tr>
           <td>${rs.stats.rank}</td>
@@ -104,11 +118,7 @@ export default function RankingsTab({ students, scores }: RankingsTabProps) {
           <td><b>${rs.student.nameKh}</b></td>
           <td class="font-mono" style="text-transform: uppercase;">${rs.student.nameEn}</td>
           <td>${rs.student.gender}</td>
-          <td>${rs.scores.khmer.toFixed(1)}</td>
-          <td>${rs.scores.math.toFixed(1)}</td>
-          <td>${rs.scores.science.toFixed(1)}</td>
-          <td>${rs.scores.social.toFixed(1)}</td>
-          <td>${rs.scores.artsPE.toFixed(1)}</td>
+          ${subjectsHtml}
           <td><b>${rs.stats.sum.toFixed(1)}</b></td>
           <td><b>${rs.stats.average.toFixed(2)}</b></td>
           <td>${getMention(rs.stats.average)}</td>
@@ -140,11 +150,7 @@ export default function RankingsTab({ students, scores }: RankingsTabProps) {
             <th>ឈ្មោះសិស្សខ្មែរ</th>
             <th>ឡាតាំង</th>
             <th>ភេទ</th>
-            <th>ភាសាខ្មែរ</th>
-            <th>គណិតវិទ្យា</th>
-            <th>វិទ្យាសាស្ត្រ</th>
-            <th>សិក្សាសង្គម</th>
-            <th>សិល្បៈ/PE</th>
+            ${headersHtml}
             <th>សរុប</th>
             <th>មធ្យមភាគ</th>
             <th>និទ្ទេស</th>
@@ -316,11 +322,22 @@ export default function RankingsTab({ students, scores }: RankingsTabProps) {
                       <th className="px-4 py-4">អត្តសញ្ញាណ</th>
                       <th className="px-4 py-4">ឈ្មោះសិស្ស (សរុបប្រុស-ស្រី)</th>
                       <th className="px-4 py-4 text-center">ភេទ</th>
-                      <th className="px-4 py-4 text-center bg-green-50/20">ភាសាខ្មែរ</th>
-                      <th className="px-4 py-4 text-center bg-blue-50/20">គណិតវិទ្យា</th>
-                      <th className="px-4 py-4 text-center bg-orange-50/20">វិទ្យាសាស្ត្រ</th>
-                      <th className="px-4 py-4 text-center bg-purple-50/20">សិក្សាសង្គម</th>
-                      <th className="px-4 py-4 text-center bg-rose-50/20 font-medium">អប់រំកាយ/សិល្បៈ</th>
+                      {SUBJECT_NAMES.map((sub, sIdx) => {
+                        const bgClasses = [
+                          'bg-green-50/20',
+                          'bg-blue-50/20',
+                          'bg-orange-50/20',
+                          'bg-purple-50/20',
+                          'bg-rose-50/20',
+                          'bg-teal-50/20',
+                          'bg-violet-50/20'
+                        ];
+                        return (
+                          <th key={sub.value} className={`px-3 py-4 text-center ${bgClasses[sIdx % bgClasses.length]}`}>
+                            {sub.labelKh}
+                          </th>
+                        );
+                      })}
                       <th className="px-4 py-4 text-center text-indigo-700 font-bold bg-indigo-50/30">សរុបពិន្ទុ</th>
                       <th className="px-4 py-4 text-center text-indigo-900 font-extrabold bg-indigo-50/50">មធ្យមភាគ</th>
                       <th className="px-4 py-4 text-center text-indigo-650 no-print">និទ្ទេស</th>
@@ -366,21 +383,14 @@ export default function RankingsTab({ students, scores }: RankingsTabProps) {
                                 {rs.student.gender}
                               </span>
                             </td>
-                            <td className="px-4 py-3 text-center font-mono font-medium text-gray-700">
-                              {rs.scores.khmer.toFixed(1)}
-                            </td>
-                            <td className="px-4 py-3 text-center font-mono font-medium text-gray-700">
-                              {rs.scores.math.toFixed(1)}
-                            </td>
-                            <td className="px-4 py-3 text-center font-mono font-medium text-gray-700">
-                              {rs.scores.science.toFixed(1)}
-                            </td>
-                            <td className="px-4 py-3 text-center font-mono font-medium text-gray-700">
-                              {rs.scores.social.toFixed(1)}
-                            </td>
-                            <td className="px-4 py-3 text-center font-mono font-medium text-gray-700">
-                              {rs.scores.artsPE.toFixed(1)}
-                            </td>
+                            {SUBJECT_NAMES.map((sub) => {
+                              const scoreVal = rs.scores[sub.value];
+                              return (
+                                <td key={sub.value} className="px-3 py-3 text-center font-mono font-medium text-gray-750">
+                                  {scoreVal !== undefined ? scoreVal.toFixed(1) : '—'}
+                                </td>
+                              );
+                            })}
                             <td className="px-4 py-3 text-center bg-indigo-50/10 text-indigo-700 font-mono font-bold text-sm">
                               {rs.stats.sum.toFixed(1)}
                             </td>

@@ -19,11 +19,34 @@ export interface Student {
 }
 
 export interface SubjectScores {
-  khmer: number; // ភាសាខ្មែរ (0-10)
-  math: number;  // គណិតវិទ្យា (0-10)
+  khmer: number; // ភាសាខ្មែរ (0-10) - calculated from sub-scores if available, or direct entry
+  math: number;  // គណិតវិទ្យា (0-10) - calculated from sub-scores if available, or direct entry
   science: number; // វិទ្យាសាស្ត្រ (0-10)
-  social: number; // សិក្សាសង្គម (0-10)
+  social: number; // សិក្សាសង្គម (0-10) - calculated from sub-scores if available, or direct entry
   artsPE: number; // អប់រំកាយ/សិល្បៈ (0-10)
+
+  // Sub-subjects for ភាសាខ្មែរ (Khmer Language)
+  khmerReading?: number; // រៀនអាន (0-10)
+  khmerDictation?: number; // សរសេរតាមអាន (0-10)
+  khmerComposition?: number; // តែងសេចក្ដី (0-10)
+
+  // Sub-subjects for គណិតវិទ្យា (Mathematics)
+  mathNumbers?: number; // ចំនួន (0-10)
+  mathMeasurement?: number; // រង្វាស់រង្វាល់ (0-10)
+  mathGeometry?: number; // ធរណីមាត្រ (0-10)
+  mathAlgebra?: number; // ពីជគណិត (0-10)
+  mathStatistics?: number; // ស្ថិតិ (0-10)
+
+  // Sub-subjects for សិក្សាសង្គម (Social Studies)
+  socialCivics?: number; // សីលធម៌-ពលរដ្ឋ (0-10)
+  socialGeography?: number; // ភូមិវិទ្យា (0-10)
+  socialHistory?: number; // ប្រវត្តិវិទ្យា (0-10)
+  socialArts?: number; // សិល្បៈ (0-10)
+
+  // Additional subjects
+  physicalEducation?: number; // អប់រំកាយនិងកីឡា (0-10)
+  lifeSkills?: number; // បំណិន (0-10)
+  foreignLanguage?: number; // ភាសាបរទេស (0-10)
 }
 
 export type AcademicPeriod = 
