@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Student, SubjectScores, AcademicPeriod } from '../types';
 import { PERIODS, SUBJECT_NAMES, calculateRecordMetrics, exportToCSV } from '../utils';
-import { Save, CheckCircle, Info, HelpCircle, FileSpreadsheet, Keyboard, Download } from 'lucide-react';
+import { Save, CheckCircle, Info, HelpCircle, FileSpreadsheet, Keyboard, Download, Copy } from 'lucide-react';
 
 interface GradeEntryTabProps {
   students: Student[];
@@ -13,6 +13,56 @@ export default function GradeEntryTab({ students, scores, onSaveScores }: GradeE
   const [selectedPeriod, setSelectedPeriod] = useState<AcademicPeriod>('nov');
   const [localScores, setLocalScores] = useState<{ [studentId: string]: SubjectScores }>({});
   const [isSavedIndicator, setIsSavedIndicator] = useState(false);
+
+  // Determine previous academic period based on selection
+  const currentIndex = PERIODS.findIndex((p) => p.value === selectedPeriod);
+  const hasPreviousPeriod = currentIndex > 0;
+  const prevPeriod = hasPreviousPeriod ? PERIODS[currentIndex - 1] : null;
+  const prevPeriodLabel = prevPeriod ? prevPeriod.labelKh : '';
+
+  // Copy previous scores for a single student
+  const handleCopyPreviousScoresForStudent = (studentId: string) => {
+    if (!prevPeriod) return;
+    const prevScores = scores[studentId]?.[prevPeriod.value];
+    if (prevScores) {
+      setLocalScores((prev) => ({
+        ...prev,
+        [studentId]: { ...prevScores }
+      }));
+      setIsSavedIndicator(false);
+    }
+  };
+
+  // Copy previous scores for all students
+  const handleCopyPreviousScoresForAll = () => {
+    if (!prevPeriod) return;
+    
+    // Check if we have any scores to copy
+    const hasAnyPrevScores = students.some(s => !!scores[s.id]?.[prevPeriod.value]);
+    if (!hasAnyPrevScores) {
+      alert(`មិនទាន់មានទិន្នន័យពិន្ទុសម្រាប់ខែមុន (${prevPeriodLabel}) ឡើយទេ។`);
+      return;
+    }
+
+    if (window.confirm(`តើអ្នកពិតជាចង់ចម្លងពិន្ទុពីខែមុន (${prevPeriodLabel}) សម្រាប់សិស្សទាំងអស់មែនទេ? (ពិន្ទុគណនាបច្ចុប្បន្នដែលមិនទាន់រក្សាទុកនឹងត្រូវជំនួស)`)) {
+      setLocalScores((prev) => {
+        const nextScores = { ...prev };
+        students.forEach((student) => {
+          const prevScores = scores[student.id]?.[prevPeriod.value];
+          if (prevScores) {
+            nextScores[student.id] = { ...prevScores };
+          }
+        });
+        return nextScores;
+      });
+      setIsSavedIndicator(false);
+    }
+  };
+
+  const hasPreviousScores = (studentId: string): boolean => {
+    if (!prevPeriod) return false;
+    return !!scores[studentId]?.[prevPeriod.value];
+  };
 
   // Load scores when students or period changes
   useEffect(() => {
@@ -152,6 +202,17 @@ export default function GradeEntryTab({ students, scores, onSaveScores }: GradeE
             នាំចេញជា Excel/CSV
           </button>
 
+          {hasPreviousPeriod && (
+            <button
+              onClick={handleCopyPreviousScoresForAll}
+              className="px-4 py-2 text-xs font-semibold bg-indigo-50 hover:bg-indigo-150 text-indigo-700 border border-indigo-100 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-xs hover:shadow-xs"
+              title={`ចម្លងពិន្ទុពីខែមុន (${prevPeriodLabel}) សម្រាប់សិស្សទាំងអស់`}
+            >
+              <Copy className="w-3.5 h-3.5" />
+              ចម្លងពីខែមុន ({prevPeriodLabel})
+            </button>
+          )}
+
           <button
             onClick={handleFillDemoScores}
             className="px-4 py-2 text-xs font-medium border border-dashed border-gray-300 hover:border-indigo-400 text-gray-500 hover:text-indigo-600 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
@@ -240,8 +301,32 @@ export default function GradeEntryTab({ students, scores, onSaveScores }: GradeE
                         {student.id}
                       </td>
                       <td className="px-6 py-3.5 font-bold text-gray-800 whitespace-nowrap">
-                        {student.nameKh}
-                        <span className="block font-mono text-[10px] text-gray-400 uppercase font-normal mt-0.5">{student.nameEn}</span>
+                        <div className="flex items-center justify-between gap-4 group">
+                          <div>
+                            {student.nameKh}
+                            <span className="block font-mono text-[10px] text-gray-400 uppercase font-normal mt-0.5">{student.nameEn}</span>
+                          </div>
+                          {hasPreviousPeriod && (
+                            <button
+                              type="button"
+                              onClick={() => handleCopyPreviousScoresForStudent(student.id)}
+                              disabled={!hasPreviousScores(student.id)}
+                              className={`p-1 px-2 rounded-lg border text-[10px] flex items-center gap-1 transition-all md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 shrink-0 ${
+                                hasPreviousScores(student.id)
+                                  ? 'bg-indigo-50 hover:bg-indigo-100 border-indigo-150 text-indigo-700 cursor-pointer'
+                                  : 'bg-gray-50 border-gray-100 text-gray-350 cursor-not-allowed'
+                              }`}
+                              title={
+                                hasPreviousScores(student.id)
+                                  ? `ចម្លងពិន្ទុពីខែមុន (${prevPeriodLabel}) របស់សិស្សនេះ`
+                                  : `មិនមានពិន្ទុខែមុនទេ`
+                              }
+                            >
+                              <Copy className="w-3 h-3 text-indigo-500" />
+                              <span>ចម្លងពីខែមុន</span>
+                            </button>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-3.5 text-center whitespace-nowrap">
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${

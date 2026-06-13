@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Student } from '../types';
-import { UserPlus, Search, Edit2, Trash2, Users, UserCheck, ShieldAlert, GraduationCap, Phone, MapPin, Download } from 'lucide-react';
+import { UserPlus, Search, Edit2, Trash2, Users, UserCheck, ShieldAlert, GraduationCap, Phone, MapPin, Download, Camera, Video, VideoOff, RefreshCw, X } from 'lucide-react';
 import { exportToCSV } from '../utils';
 
 interface StudentsTabProps {
@@ -29,6 +29,96 @@ export default function StudentsTab({ students, onAddStudent, onUpdateStudent, o
   const [motherName, setMotherName] = useState('');
   const [motherJob, setMotherJob] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [photoUrl, setPhotoUrl] = useState('');
+
+  // Camera State
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  // Clean up camera stream on unmount
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
+
+  // Handle stream assignment when camera becomes active
+  useEffect(() => {
+    if (isCameraActive && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+    }
+  }, [isCameraActive]);
+
+  // Start Camera
+  const startCamera = async () => {
+    setCameraError(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { 
+          facingMode: 'user',
+          width: { ideal: 640 },
+          height: { ideal: 640 } 
+        }
+      });
+      streamRef.current = stream;
+      setIsCameraActive(true);
+    } catch (err: any) {
+      console.error("Camera access error:", err);
+      setCameraError("មិនអាចបើកកាមេរ៉ាបានទេ! សូមពិនិត្យការអនុញ្ញាតចួលប្រើប្រាស់។ (Could not access camera. Please check permissions.)");
+    }
+  };
+
+  // Stop Camera
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setIsCameraActive(false);
+  };
+
+  // Capture Photo
+  const capturePhoto = () => {
+    if (videoRef.current) {
+      const video = videoRef.current;
+      const canvas = document.createElement('canvas');
+      
+      const videoWidth = video.videoWidth || 640;
+      const videoHeight = video.videoHeight || 480;
+      const size = Math.min(videoWidth, videoHeight);
+      
+      canvas.width = 320;
+      canvas.height = 320;
+      
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        // Mirror horizontally to match normal user-facing camera perspective
+        ctx.translate(320, 0);
+        ctx.scale(-1, 1);
+        
+        const sx = (videoWidth - size) / 2;
+        const sy = (videoHeight - size) / 2;
+        
+        ctx.drawImage(video, sx, sy, size, size, 0, 0, 320, 320);
+        
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        setPhotoUrl(dataUrl);
+        stopCamera();
+      }
+    }
+  };
+
+  const handleCloseForm = () => {
+    stopCamera();
+    setIsFormOpen(false);
+  };
 
   // Handle opening form for adding
   const handleOpenAddForm = () => {
@@ -45,6 +135,7 @@ export default function StudentsTab({ students, onAddStudent, onUpdateStudent, o
     setMotherName('');
     setMotherJob('');
     setPhoneNumber('');
+    setPhotoUrl('');
     setIsFormOpen(true);
   };
 
@@ -63,6 +154,7 @@ export default function StudentsTab({ students, onAddStudent, onUpdateStudent, o
     setMotherName(student.motherName || '');
     setMotherJob(student.motherJob || '');
     setPhoneNumber(student.phoneNumber || '');
+    setPhotoUrl(student.photoUrl || '');
     setIsFormOpen(true);
   };
 
@@ -88,6 +180,7 @@ export default function StudentsTab({ students, onAddStudent, onUpdateStudent, o
       classTeacher: editingStudent?.classTeacher || '',
       gradeClass: editingStudent?.gradeClass || '',
       academicYear: editingStudent?.academicYear || '',
+      photoUrl: photoUrl.trim() || undefined,
     };
 
     if (editingStudent) {
@@ -95,7 +188,7 @@ export default function StudentsTab({ students, onAddStudent, onUpdateStudent, o
     } else {
       onAddStudent(studentData);
     }
-    setIsFormOpen(false);
+    handleCloseForm();
   };
 
   const handleDelete = (id: string) => {
@@ -249,7 +342,18 @@ export default function StudentsTab({ students, onAddStudent, onUpdateStudent, o
                       {student.id}
                     </td>
                     <td className="px-6 py-4 text-gray-900 font-medium whitespace-nowrap">
-                      {student.nameKh}
+                      <div className="flex items-center gap-3">
+                        <img 
+                          src={student.photoUrl?.trim() || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(student.nameEn || student.id)}&hairColor=2c1b18,4a3728&skinColor=e0a47d,f8d3bb,fbd3c6`}
+                          alt={student.nameKh}
+                          referrerPolicy="no-referrer"
+                          className="w-10 h-10 rounded-full border border-gray-150 object-cover bg-slate-50 shrink-0 shadow-xs"
+                          onError={(e) => {
+                            e.currentTarget.src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(student.nameEn || student.id)}&hairColor=2c1b18,4a3728&skinColor=e0a47d,f8d3bb,fbd3c6`;
+                          }}
+                        />
+                        <span className="font-bold text-gray-850">{student.nameKh}</span>
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-gray-500 font-mono text-xs whitespace-nowrap uppercase">
                       {student.nameEn}
@@ -342,7 +446,7 @@ export default function StudentsTab({ students, onAddStudent, onUpdateStudent, o
                 {editingStudent ? 'កែប្រែព័ត៌មានសិស្ស' : 'ចុះឈ្មោះសិស្សថ្មី'}
               </h3>
               <button
-                onClick={() => setIsFormOpen(false)}
+                onClick={handleCloseForm}
                 className="text-gray-400 hover:text-gray-600 w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors cursor-pointer text-lg font-bold"
               >
                 &times;
@@ -448,6 +552,119 @@ export default function StudentsTab({ students, onAddStudent, onUpdateStudent, o
                     className="w-full px-4 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500"
                   />
                 </div>
+
+                <div className="space-y-3">
+                  <label className="text-xs font-semibold text-gray-700 block">រូបថតសិស្ស (Student Photo)</label>
+                  
+                  {isCameraActive ? (
+                    <div className="relative w-full max-w-xs mx-auto aspect-square rounded-2xl overflow-hidden bg-black border border-gray-300 shadow-inner flex flex-col justify-end">
+                      <video
+                        ref={videoRef}
+                        autoPlay
+                        playsInline
+                        className="absolute inset-0 w-full h-full object-cover transform -scale-x-100"
+                      />
+                      {/* Interactive view bounds overlay for photo alignment */}
+                      <div className="absolute inset-4 border border-white/20 rounded-full pointer-events-none flex items-center justify-center">
+                        <div className="w-2/3 h-2/3 border border-dashed border-white/30 rounded-full" />
+                      </div>
+                      
+                      {/* Floating control buttons */}
+                      <div className="relative z-10 p-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-center justify-center gap-3">
+                        <button
+                          type="button"
+                          onClick={capturePhoto}
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-2 px-5 rounded-full shadow-md hover:shadow-indigo-900/40 cursor-pointer flex items-center gap-1.5 transition-colors"
+                        >
+                          <Camera className="w-4 h-4" />
+                          ថតរូប (Capture)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={stopCamera}
+                          className="bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs py-2 px-4 rounded-full cursor-pointer flex items-center gap-1.5 transition-colors"
+                        >
+                          <VideoOff className="w-4 h-4" />
+                          បិទកាមេរ៉ា
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                      {/* Image Thumbnail */}
+                      <div className="relative w-24 h-24 rounded-2xl border-2 border-gray-200 overflow-hidden bg-slate-50 flex items-center justify-center shrink-0 shadow-sm">
+                        <img 
+                          src={photoUrl.trim() || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(nameEn || 'sample')}&hairColor=2c1b18,4a3728&skinColor=e0a47d,f8d3bb,fbd3c6`}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
+                        {photoUrl.trim() && (
+                          <button
+                            type="button"
+                            onClick={() => setPhotoUrl('')}
+                            className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full p-1 shadow-md transition-colors cursor-pointer"
+                            title="លុបរូបភាព"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Photo Capture & URL source selection controls */}
+                      <div className="flex-1 space-y-2 w-full">
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={startCamera}
+                            className="bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-700 font-bold text-xs py-2 px-3.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 hover:shadow-xs"
+                          >
+                            <Video className="w-4 h-4" />
+                            បើកកាមេរ៉ាថតរូប (Use Camera)
+                          </button>
+                          
+                          {photoUrl.trim().startsWith('data:image/') && (
+                            <button
+                              type="button"
+                              onClick={startCamera}
+                              className="bg-slate-50 border border-gray-200 hover:bg-gray-100 text-gray-700 font-bold text-xs py-2 px-3.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
+                            >
+                              <RefreshCw className="w-3.5 h-3.5" />
+                              ថតរូបឡើងវិញ (Retake)
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="space-y-1">
+                          <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">ឬ បញ្ចូលតំណភ្ជាប់រូបថត (Or Enter URL)</span>
+                          <input
+                            type="text"
+                            placeholder="បញ្ចូលតំណភ្ជាប់រូបភាពពីអ៊ីនធឺណិត (https://...)"
+                            value={photoUrl.startsWith('data:image/') ? '' : photoUrl}
+                            onChange={(e) => setPhotoUrl(e.target.value)}
+                            disabled={photoUrl.startsWith('data:image/')}
+                            className="w-full px-4 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 font-sans disabled:bg-gray-50 disabled:text-gray-400"
+                          />
+                          {photoUrl.startsWith('data:image/') && (
+                            <p className="text-[9px] text-amber-600 italic">
+                              * រូបភាពបច្ចុប្បន្នត្រូវបានថតចេញពីកាមេរ៉ាផ្ទាល់។ លុបរូបភាពដើម្បីលីងទៅកាន់ URL ផ្សេង។
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {cameraError && (
+                    <div className="bg-red-50 text-red-700 px-3.5 py-2.5 rounded-xl border border-red-100 text-xs font-medium flex items-center gap-2">
+                      <ShieldAlert className="w-4 h-4 text-red-500 shrink-0" />
+                      <span>{cameraError}</span>
+                    </div>
+                  )}
+
+                  <p className="text-[10px] text-gray-400">
+                    * អ្នកអាចថតរូបផ្ទាល់ពីឧបករណ៍ ឬបញ្ចូលតំណភ្ជាប់រូបភាពពីអ៊ីនធឺណិត ឬទុកទទេដើម្បីឱ្យប្រព័ន្ធបង្កើតរូបគំនូរតំណាង (Avatar) ដោយស្វ័យប្រវត្តសម្រាប់តារាងកិត្តិយស។
+                  </p>
+                </div>
               </div>
 
               {/* Parents Box */}
@@ -513,7 +730,7 @@ export default function StudentsTab({ students, onAddStudent, onUpdateStudent, o
               <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-4 mt-6">
                 <button
                   type="button"
-                  onClick={() => setIsFormOpen(false)}
+                  onClick={handleCloseForm}
                   className="px-5 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
                 >
                   បោះបង់
