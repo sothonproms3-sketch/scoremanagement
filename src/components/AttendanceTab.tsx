@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Student, AttendanceRecord } from '../types';
 import { MONTH_LIST, PERIODS, exportToCSV } from '../utils';
 import { Check, ClipboardList, AlertCircle, Save, CheckCircle, Info, Download } from 'lucide-react';
+import { LineChart, Line, Tooltip } from 'recharts';
 
 interface AttendanceTabProps {
   students: Student[];
@@ -79,6 +80,38 @@ export default function AttendanceTab({ students, attendance, onSaveAttendance }
   // Helper for matching month abbreviation with label Khmer
   const getMonthLabel = (m: string) => {
     return PERIODS.find((p) => p.value === m)?.labelKh || m;
+  };
+
+  // Get consistent 6-month sequence ending with current month
+  const getTrendMonths = (currentMonthKey: string): string[] => {
+    const currentIdx = MONTH_LIST.indexOf(currentMonthKey);
+    if (currentIdx === -1) return MONTH_LIST.slice(-6);
+    
+    if (currentIdx < 5) {
+      return MONTH_LIST.slice(0, 6);
+    } else {
+      return MONTH_LIST.slice(currentIdx - 5, currentIdx + 1);
+    }
+  };
+
+  // Helper to construct trend data for Recharts sparkline
+  const getTrendDataForStudent = (studentId: string) => {
+    const trendMonths = getTrendMonths(selectedMonth);
+    return trendMonths.map((m) => {
+      let rec;
+      if (m === selectedMonth) {
+        rec = localAttendance[studentId] || { excused: 0, unexcused: 0, late: 0 };
+      } else {
+        rec = attendance[studentId]?.[m] || { excused: 0, unexcused: 0, late: 0 };
+      }
+      return {
+        monthKey: m,
+        monthLabel: getMonthLabel(m),
+        excused: rec.excused || 0,
+        unexcused: rec.unexcused || 0,
+        late: rec.late || 0
+      };
+    });
   };
 
   const handleExportAttendanceCSV = () => {
@@ -203,6 +236,16 @@ export default function AttendanceTab({ students, attendance, onSaveAttendance }
                   <th className="px-6 py-4 text-center bg-green-50/10 min-w-[200px]">មានច្បាប់ (Excused Absence - P)</th>
                   <th className="px-6 py-4 text-center bg-rose-50/10 min-w-[200px]">អត់ច្បាប់ (Unexcused Absence - A)</th>
                   <th className="px-6 py-4 text-center bg-amber-50/10 min-w-[200px]">យឺត (Late Arrival - L)</th>
+                  <th className="px-6 py-4 text-center bg-indigo-50/10 min-w-[150px]">
+                    <div className="flex flex-col items-center gap-1">
+                      <span>ទំនោរវត្តមាន ៦ខែ (6-Month Trend)</span>
+                      <div className="flex items-center gap-2 text-[9px] font-normal tracking-tight normal-case">
+                        <span className="flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>អត់ច្បាប់</span>
+                        <span className="flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>មានច្បាប់</span>
+                        <span className="flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>យឺត</span>
+                      </div>
+                    </div>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-sm">
@@ -309,6 +352,63 @@ export default function AttendanceTab({ students, attendance, onSaveAttendance }
                           >
                             +
                           </button>
+                        </div>
+                      </td>
+
+                      {/* 6-MONTH TREND SPARKLINE */}
+                      <td className="px-4 py-3 bg-indigo-50/5 text-center min-w-[150px]">
+                        <div className="inline-flex justify-center items-center bg-white p-1 rounded-lg border border-gray-100 shadow-3xs">
+                          <LineChart
+                            width={130}
+                            height={34}
+                            data={getTrendDataForStudent(student.id)}
+                            margin={{ top: 2, right: 3, left: 3, bottom: 2 }}
+                          >
+                            <Line
+                              type="monotone"
+                              dataKey="unexcused"
+                              stroke="#ef4444"
+                              strokeWidth={1.5}
+                              dot={{ r: 1.5, strokeWidth: 0, fill: '#ef4444' }}
+                              activeDot={{ r: 4 }}
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="excused"
+                              stroke="#10b981"
+                              strokeWidth={1.5}
+                              dot={{ r: 1.5, strokeWidth: 0, fill: '#10b981' }}
+                              activeDot={{ r: 4 }}
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="late"
+                              stroke="#f59e0b"
+                              strokeWidth={1.5}
+                              dot={{ r: 1.5, strokeWidth: 0, fill: '#f59e0b' }}
+                              activeDot={{ r: 4 }}
+                            />
+                            <Tooltip
+                              content={({ active, payload }) => {
+                                if (active && payload && payload.length) {
+                                  const d = payload[0].payload;
+                                  return (
+                                    <div className="bg-slate-950/95 text-[10px] text-white px-2.5 py-1.5 rounded-lg border border-slate-800 shadow-lg font-sans text-left leading-relaxed z-50">
+                                      <p className="font-bold border-b border-slate-800 pb-0.5 mb-1 text-slate-200">
+                                        ខែ {d.monthLabel}
+                                      </p>
+                                      <div className="space-y-0.5">
+                                        <p className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>អត់ច្បាប់: <strong className="font-mono text-rose-300">{d.unexcused}</strong></p>
+                                        <p className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>មានច្បាប់: <strong className="font-mono text-emerald-300">{d.excused}</strong></p>
+                                        <p className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>យឺត: <strong className="font-mono text-amber-300">{d.late}</strong></p>
+                                      </div>
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              }}
+                            />
+                          </LineChart>
                         </div>
                       </td>
                     </tr>
