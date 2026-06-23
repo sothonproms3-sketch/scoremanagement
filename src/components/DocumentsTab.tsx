@@ -84,7 +84,7 @@ export default function DocumentsTab({ students, scores, attendance, classInfo }
             <td>${!p.isExam && attRecord.excused > 0 ? attRecord.excused : '—'}</td>
             <td>${!p.isExam && attRecord.unexcused > 0 ? attRecord.unexcused : '—'}</td>
             <td>${!p.isExam && attRecord.late > 0 ? attRecord.late : '—'}</td>
-            <td class="text-left" style="font-size: 10px; font-weight: normal; font-style: italic;">${hasScoresEntered ? getResultComments(average) : '—'}</td>
+            <td class="text-left" style="font-size: 10px; font-weight: normal; font-style: italic;">${attRecord.notes?.trim() ? attRecord.notes : (hasScoresEntered ? getResultComments(average) : '—')}</td>
           </tr>
         `;
       });
@@ -438,8 +438,12 @@ export default function DocumentsTab({ students, scores, attendance, classInfo }
                       </td>
 
                       {/* Remarks */}
-                      <td className="px-3 py-2 text-left text-[10px] text-gray-500 italic max-w-xs leading-tight">
-                        {hasScoresEntered ? getResultComments(average) : '—'}
+                      <td className="px-3 py-2 text-left text-[10px] text-gray-700 font-medium max-w-xs leading-tight whitespace-pre-wrap">
+                        {attRecord.notes?.trim() ? (
+                          <span className="text-indigo-800 not-italic font-bold">{attRecord.notes}</span>
+                        ) : (
+                          hasScoresEntered ? getResultComments(average) : '—'
+                        )}
                       </td>
                     </tr>
                   );

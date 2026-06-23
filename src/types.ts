@@ -94,6 +94,7 @@ export interface AttendanceRecord {
   excused: number; // វត្តមានមានច្បាប់ (Excused absences)
   unexcused: number; // វត្តមានឥតច្បាប់ (Unexcused absences)
   late: number; // យឺត (Late arrivals)
+  notes?: string; // យោបល់គ្រូ និងការសង្កេតឥរិយាបថ (Teacher's monthly notes & comments for report cards)
 }
 
 // Full app state to easily sync to localStorage

@@ -370,9 +370,49 @@ export default function RankingsTab({ students, scores }: RankingsTabProps) {
                             <td className="px-4 py-3 font-mono font-medium text-xs text-gray-400">
                               {rs.student.id}
                             </td>
-                            <td className="px-4 py-3 font-bold text-gray-900 whitespace-nowrap">
-                              {rs.student.nameKh}
-                              <span className="block font-mono text-[10px] text-gray-400 group-hover:text-indigo-600 transition-colors uppercase font-normal">{rs.student.nameEn}</span>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <div className="flex items-center gap-3">
+                                {/* Student Photo with Badge Overlay */}
+                                <div className="relative shrink-0 select-none">
+                                  <div className={`w-10 h-10 rounded-full overflow-hidden border-2 bg-slate-50 shadow-xs ${
+                                    rs.stats.rank === 1 ? 'border-amber-400 ring-2 ring-amber-300/35' :
+                                    rs.stats.rank === 2 ? 'border-slate-300 ring-2 ring-slate-300/35' :
+                                    rs.stats.rank === 3 ? 'border-amber-600 ring-2 ring-amber-600/25' :
+                                    'border-gray-200'
+                                  }`}>
+                                    <img
+                                      src={rs.student.photoUrl?.trim() || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(rs.student.nameEn || rs.student.id)}&hairColor=2c1b18,4a3728&skinColor=e0a47d,f8d3bb,fbd3c6`}
+                                      alt={rs.student.nameKh}
+                                      className="w-full h-full object-cover"
+                                      referrerPolicy="no-referrer"
+                                      onError={(e) => {
+                                        e.currentTarget.src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(rs.student.nameEn || rs.student.id)}&hairColor=2c1b18,4a3728&skinColor=e0a47d,f8d3bb,fbd3c6`;
+                                      }}
+                                    />
+                                  </div>
+                                  
+                                  {/* Gold, Silver, Bronze Badge overlay on Photo in Table list */}
+                                  {rs.stats.rank === 1 && (
+                                    <span className="absolute -top-1 -right-1 bg-amber-450 text-amber-950 font-bold rounded-full w-4.5 h-4.5 flex items-center justify-center text-[10px] border border-white shadow-xs animate-pulse" title="មេដាយមាស">
+                                      🥇
+                                    </span>
+                                  )}
+                                  {rs.stats.rank === 2 && (
+                                    <span className="absolute -top-1 -right-1 bg-slate-200 text-slate-800 font-bold rounded-full w-4.5 h-4.5 flex items-center justify-center text-[10px] border border-white shadow-xs" title="មេដាយប្រាក់">
+                                      🥈
+                                    </span>
+                                  )}
+                                  {rs.stats.rank === 3 && (
+                                    <span className="absolute -top-1 -right-1 bg-amber-655 text-white font-bold rounded-full w-4.5 h-4.5 flex items-center justify-center text-[10px] border border-white shadow-xs" title="មេដាយសំរិទ្ធ">
+                                      🥉
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="leading-tight">
+                                  <span className="font-bold text-gray-900 block group-hover:text-indigo-600 transition-colors">{rs.student.nameKh}</span>
+                                  <span className="block font-mono text-[10px] text-gray-400 uppercase font-normal">{rs.student.nameEn}</span>
+                                </div>
+                              </div>
                             </td>
                             <td className="px-4 py-3 text-center whitespace-nowrap">
                               <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -478,10 +518,10 @@ export default function RankingsTab({ students, scores }: RankingsTabProps) {
                   
                   {/* SECOND PLACE (SILVER medal) - Left */}
                   {topStudents[1] ? (
-                    <div className="order-2 md:order-1 bg-white/5 border border-white/10 p-6 rounded-2xl text-center space-y-4 shadow-lg hover:bg-white/10 transition-all print:text-gray-900 print:border-slate-300 print:bg-slate-50 flex flex-col justify-center items-center">
+                    <div className="order-2 md:order-1 bg-white/5 border border-white/10 p-6 rounded-2xl text-center space-y-4 shadow-lg hover:bg-white/10 transition-all print:text-gray-900 print:border-slate-300 print:bg-slate-50 flex flex-col justify-center items-center group">
                       <div className="relative">
                         {/* Frame Wrapper */}
-                        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full p-1 bg-gradient-to-tr from-slate-350 via-slate-100 to-slate-400 shadow-md">
+                        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full p-1 bg-gradient-to-tr from-slate-300 via-slate-100 to-slate-400 shadow-md relative group-hover:scale-105 transition-transform duration-300">
                           <div className="w-full h-full rounded-full overflow-hidden bg-slate-100 border-2 border-white">
                             <img
                               src={topStudents[1].student.photoUrl?.trim() || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(topStudents[1].student.nameEn || topStudents[1].student.id)}&hairColor=2c1b18,4a3728&skinColor=e0a47d,f8d3bb,fbd3c6`}
@@ -492,6 +532,11 @@ export default function RankingsTab({ students, scores }: RankingsTabProps) {
                                 e.currentTarget.src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(topStudents[1].student.nameEn || topStudents[1].student.id)}&hairColor=2c1b18,4a3728&skinColor=e0a47d,f8d3bb,fbd3c6`;
                               }}
                             />
+                          </div>
+                          
+                          {/* Silver Laurel / Ribbon Overlay on Photo */}
+                          <div className="absolute -top-1 -left-1 bg-gradient-to-br from-slate-200 to-slate-400 rounded-lg px-2 py-0.5 text-[9px] text-slate-900 border border-white font-extrabold shadow-sm flex items-center gap-0.5 no-print">
+                            🥈 ប្រាក់ (Silver)
                           </div>
                         </div>
                         {/* Rank Badge */}
@@ -539,7 +584,7 @@ export default function RankingsTab({ students, scores }: RankingsTabProps) {
 
                   {/* FIRST PLACE (GOLD trophy) - Center - Highest Elevation & Largest Card */}
                   {topStudents[0] ? (
-                    <div className="order-1 md:order-2 bg-gradient-to-b from-amber-950/40 to-slate-900 p-8 rounded-3xl text-center space-y-5 shadow-2xl border-2 border-amber-400 scale-105 relative print:text-gray-900 print:border-amber-500 print:bg-amber-50/25 flex flex-col justify-center items-center">
+                    <div className="order-1 md:order-2 bg-gradient-to-b from-amber-950/40 to-slate-900 p-8 rounded-3xl text-center space-y-5 shadow-2xl border-2 border-amber-400 scale-105 relative print:text-gray-900 print:border-amber-500 print:bg-amber-50/25 flex flex-col justify-center items-center group">
                       {/* Premium Top label */}
                       <div className="absolute -top-3.5 left-1/2 transform -translate-x-1/2 bg-amber-400 text-slate-950 text-[10px] font-black uppercase px-4 py-1 rounded-full flex items-center gap-1 shadow-md">
                         <Trophy className="w-3.5 h-3.5 fill-current" /> សិស្សពូកែលេខ ១ (TOP 1)
@@ -547,7 +592,7 @@ export default function RankingsTab({ students, scores }: RankingsTabProps) {
 
                       <div className="relative mt-2">
                         {/* Elegant Frame Wrapper */}
-                        <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full p-1.5 bg-gradient-to-tr from-amber-500 via-amber-300 to-amber-600 shadow-xl ring-4 ring-amber-400/20 animate-pulse">
+                        <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full p-1.5 bg-gradient-to-tr from-amber-500 via-amber-300 to-amber-600 shadow-xl ring-4 ring-amber-400/20 animate-pulse relative group-hover:scale-105 transition-transform duration-300">
                           <div className="w-full h-full rounded-full overflow-hidden bg-amber-50 border-3 border-white">
                             <img
                               src={topStudents[0].student.photoUrl?.trim() || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(topStudents[0].student.nameEn || topStudents[0].student.id)}&hairColor=2c1b18,4a3728&skinColor=e0a47d,f8d3bb,fbd3c6`}
@@ -555,13 +600,18 @@ export default function RankingsTab({ students, scores }: RankingsTabProps) {
                               referrerPolicy="no-referrer"
                               className="w-full h-full object-cover"
                               onError={(e) => {
-                                e.currentTarget.src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(topStudents[0].student.nameEn || topStudents[0].student.id)}&hairColor=2c1b18,4a3728&skinColor=e0a47d,f8d3bb,fbd3c6`;
+                                e.currentTarget.src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(topStudents[0].student.nameEn || topStudents[0].student.id)}&hairColor=2c1b18,4a3728&skinColor=e0a47d,f8d3bb,fbd3c65`;
                               }}
                             />
                           </div>
+                          
+                          {/* Gold Laurel / Medal Overlay on Photo */}
+                          <div className="absolute -top-1 -left-1 bg-gradient-to-br from-amber-400 to-amber-653 rounded-lg px-2.5 py-0.5 text-[10px] text-amber-950 border border-white font-black shadow-sm flex items-center gap-0.5 no-print">
+                            🥇 មាស (Gold)
+                          </div>
                         </div>
                         {/* Gold Crown Trophy Icon overlay */}
-                        <span className="absolute -top-2.5 -right-1 bg-amber-400 text-slate-950 p-1.5 rounded-full ring-2 ring-white shadow-lg animate-bounce">
+                        <span className="absolute -top-2.5 -right-3 bg-amber-400 text-slate-950 p-1.5 rounded-full ring-2 ring-white shadow-lg animate-bounce">
                           <Trophy className="w-4 h-4 fill-current text-indigo-950" />
                         </span>
                         {/* Rank Badge */}
@@ -609,10 +659,10 @@ export default function RankingsTab({ students, scores }: RankingsTabProps) {
 
                   {/* THIRD PLACE (BRONZE medal) - Right */}
                   {topStudents[2] ? (
-                    <div className="order-3 bg-white/5 border border-white/10 p-6 rounded-2xl text-center space-y-4 shadow-lg hover:bg-white/10 transition-all print:text-gray-900 print:border-slate-300 print:bg-slate-50 flex flex-col justify-center items-center">
+                    <div className="order-3 bg-white/5 border border-white/10 p-6 rounded-2xl text-center space-y-4 shadow-lg hover:bg-white/10 transition-all print:text-gray-900 print:border-slate-300 print:bg-slate-50 flex flex-col justify-center items-center group">
                       <div className="relative">
                         {/* Frame Wrapper */}
-                        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full p-1 bg-gradient-to-tr from-amber-700 via-orange-100 to-amber-900 shadow-md">
+                        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full p-1 bg-gradient-to-tr from-amber-700 via-orange-100 to-amber-900 shadow-md relative group-hover:scale-105 transition-transform duration-300">
                           <div className="w-full h-full rounded-full overflow-hidden bg-slate-100 border-2 border-white">
                             <img
                               src={topStudents[2].student.photoUrl?.trim() || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(topStudents[2].student.nameEn || topStudents[2].student.id)}&hairColor=2c1b18,4a3728&skinColor=e0a47d,f8d3bb,fbd3c6`}
@@ -623,6 +673,11 @@ export default function RankingsTab({ students, scores }: RankingsTabProps) {
                                 e.currentTarget.src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(topStudents[2].student.nameEn || topStudents[2].student.id)}&hairColor=2c1b18,4a3728&skinColor=e0a47d,f8d3bb,fbd3c6`;
                               }}
                             />
+                          </div>
+                          
+                          {/* Bronze Laurel / Medal Overlay on Photo */}
+                          <div className="absolute -top-1 -left-1 bg-gradient-to-br from-amber-600 to-amber-800 rounded-lg px-2 py-0.5 text-[9px] text-white border border-white font-extrabold shadow-sm flex items-center gap-0.5 no-print">
+                            🥉 សំរិទ្ធ (Bronze)
                           </div>
                         </div>
                         {/* Rank Badge */}
@@ -642,7 +697,7 @@ export default function RankingsTab({ students, scores }: RankingsTabProps) {
                       {/* Score Summary */}
                       <div className="bg-amber-800/20 text-amber-300 border border-amber-600/25 px-4 py-1.5 rounded-xl print:bg-amber-100/40 print:text-amber-850 print:border-amber-300 w-full text-center">
                         <p className="text-[10px] font-bold text-amber-400 print:text-amber-700">មធ្យមភាគពិន្ទុ</p>
-                        <strong className="font-mono text-sm font-black text-amber-300 print:text-amber-900">{topStudents[2].stats.average.toFixed(2)}</strong>
+                        <strong className="font-mono text-sm font-black text-amber-300 print:text-amber-950">{topStudents[2].stats.average.toFixed(2)}</strong>
                       </div>
 
                       {/* Subject Scores Breakdown */}
@@ -679,10 +734,10 @@ export default function RankingsTab({ students, scores }: RankingsTabProps) {
                     
                     {/* FOURTH PLACE (Teal Shield/Ribbon) */}
                     {topStudents[3] ? (
-                      <div className="bg-white/5 border border-white/10 p-5 rounded-2xl flex flex-col sm:flex-row items-center gap-4 hover:bg-white/10 transition-all print:text-gray-900 print:border-slate-200 print:bg-slate-50">
+                      <div className="bg-white/5 border border-white/10 p-5 rounded-2xl flex flex-col sm:flex-row items-center gap-4 hover:bg-white/10 transition-all print:text-gray-900 print:border-slate-200 print:bg-slate-50 group">
                         <div className="relative shrink-0">
                           {/* Image frame */}
-                          <div className="w-20 h-20 rounded-full p-1 bg-gradient-to-tr from-teal-500 via-teal-100 to-teal-650 shadow-md">
+                          <div className="w-20 h-20 rounded-full p-1 bg-gradient-to-tr from-teal-500 via-teal-100 to-teal-650 shadow-md relative group-hover:scale-105 transition-transform duration-300">
                             <div className="w-full h-full rounded-full overflow-hidden bg-slate-100 border-2 border-white">
                               <img
                                 src={topStudents[3].student.photoUrl?.trim() || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(topStudents[3].student.nameEn || topStudents[3].student.id)}&hairColor=2c1b18,4a3728&skinColor=e0a47d,f8d3bb,fbd3c6`}
@@ -693,6 +748,11 @@ export default function RankingsTab({ students, scores }: RankingsTabProps) {
                                   e.currentTarget.src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(topStudents[3].student.nameEn || topStudents[3].student.id)}&hairColor=2c1b18,4a3728&skinColor=e0a47d,f8d3bb,fbd3c6`;
                                 }}
                               />
+                            </div>
+                            
+                            {/* Overlay Badge */}
+                            <div className="absolute -top-1 -left-1 bg-teal-600 text-white text-[8px] rounded px-1 font-bold border border-white shadow-xs no-print">
+                              លេខ ៤
                             </div>
                           </div>
                           {/* Rank badge */}
@@ -723,10 +783,10 @@ export default function RankingsTab({ students, scores }: RankingsTabProps) {
 
                     {/* FIFTH PLACE (Purple Shield/Ribbon) */}
                     {topStudents[4] ? (
-                      <div className="bg-white/5 border border-white/10 p-5 rounded-2xl flex flex-col sm:flex-row items-center gap-4 hover:bg-white/10 transition-all print:text-gray-900 print:border-slate-200 print:bg-slate-50">
+                      <div className="bg-white/5 border border-white/10 p-5 rounded-2xl flex flex-col sm:flex-row items-center gap-4 hover:bg-white/10 transition-all print:text-gray-900 print:border-slate-200 print:bg-slate-50 group">
                         <div className="relative shrink-0">
                           {/* Image frame */}
-                          <div className="w-20 h-20 rounded-full p-1 bg-gradient-to-tr from-purple-500 via-purple-100 to-purple-650 shadow-md">
+                          <div className="w-20 h-20 rounded-full p-1 bg-gradient-to-tr from-purple-500 via-purple-100 to-purple-650 shadow-md relative group-hover:scale-105 transition-transform duration-300">
                             <div className="w-full h-full rounded-full overflow-hidden bg-slate-100 border-2 border-white">
                               <img
                                 src={topStudents[4].student.photoUrl?.trim() || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(topStudents[4].student.nameEn || topStudents[4].student.id)}&hairColor=2c1b18,4a3728&skinColor=e0a47d,f8d3bb,fbd3c6`}
@@ -737,6 +797,11 @@ export default function RankingsTab({ students, scores }: RankingsTabProps) {
                                   e.currentTarget.src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(topStudents[4].student.nameEn || topStudents[4].student.id)}&hairColor=2c1b18,4a3728&skinColor=e0a47d,f8d3bb,fbd3c6`;
                                 }}
                               />
+                            </div>
+                            
+                            {/* Overlay Badge */}
+                            <div className="absolute -top-1 -left-1 bg-purple-600 text-white text-[8px] rounded px-1 font-bold border border-white shadow-xs no-print">
+                              លេខ ៥
                             </div>
                           </div>
                           {/* Rank badge */}

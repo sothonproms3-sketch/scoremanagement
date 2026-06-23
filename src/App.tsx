@@ -24,7 +24,8 @@ import {
   RefreshCw, 
   Trash2, 
   ClipboardCheck, 
-  Building
+  Building,
+  Check
 } from 'lucide-react';
 
 const STORAGE_KEY = 'khmer_primary_gradebook_db_v1';
@@ -34,6 +35,7 @@ export default function App() {
   const [appData, setAppData] = useState<AppData | null>(null);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'students' | 'scores' | 'attendance' | 'rankings' | 'documents'>('dashboard');
   const [showSettings, setShowSettings] = useState(false);
+  const [showSavedIndicator, setShowSavedIndicator] = useState(false);
 
   // Class metadata settings inputs
   const [schoolName, setSchoolName] = useState('សាលាបឋមសិក្សាគំរូពញាក្រែក');
@@ -67,6 +69,13 @@ export default function App() {
   // Save database to LocalStorage whenever appData changes
   const saveToLocalStorage = (newData: AppData) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
+    setShowSavedIndicator(true);
+    if ((window as any).saveTimeout) {
+      clearTimeout((window as any).saveTimeout);
+    }
+    (window as any).saveTimeout = setTimeout(() => {
+      setShowSavedIndicator(false);
+    }, 2000);
   };
 
   // Seeding helper
@@ -125,6 +134,25 @@ export default function App() {
     const updated: AppData = {
       ...appData,
       students: [...appData.students, newStudent]
+    };
+    setAppData(updated);
+    saveToLocalStorage(updated);
+  };
+
+  const handleImportStudents = (newStudents: Student[]) => {
+    if (!appData) return;
+
+    // Inject class fields into all imported students
+    const injectedStudents = newStudents.map(student => ({
+      ...student,
+      classTeacher,
+      gradeClass,
+      academicYear
+    }));
+
+    const updated: AppData = {
+      ...appData,
+      students: [...appData.students, ...injectedStudents]
     };
     setAppData(updated);
     saveToLocalStorage(updated);
@@ -422,7 +450,8 @@ export default function App() {
       {/* 2. SUB NAVIGATION BAR (Hides on standard print layouts) */}
       <nav className="bg-white border-b border-gray-200 no-print">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap gap-1 py-1.5 sm:py-2 justify-center sm:justify-start">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between py-1.5 sm:py-2 gap-3">
+            <div className="flex flex-wrap gap-1 justify-center sm:justify-start">
             
             <button
               onClick={() => setActiveTab('dashboard')}
@@ -496,6 +525,31 @@ export default function App() {
               សៀវភៅតាមដាន &amp; សិក្ខាគារិក (Reports)
             </button>
             
+            </div>
+
+            {/* Visual Storage Save Status Indicator */}
+            <div className="flex items-center justify-center shrink-0 select-none">
+              <div 
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold tracking-wide border transition-all duration-300 ${
+                  showSavedIndicator 
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200 shadow-3xs scale-100 opacity-100' 
+                    : 'bg-slate-50/60 text-slate-400 border-slate-100 scale-95 opacity-85'
+                }`}
+                title="ទិន្នន័យត្រូវបានរក្សាទុកដោយស្វ័យប្រវត្តិទៅក្នុងកម្មវិធីរុករករបស់អ្នក (Autosaved to local browser)"
+              >
+                {showSavedIndicator ? (
+                  <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3.5] animate-bounce" />
+                ) : (
+                  <div className="w-2 h-2 rounded-full bg-slate-300 relative flex items-center justify-center">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-slate-300 opacity-75"></span>
+                  </div>
+                )}
+                <span className="font-sans text-[11px] font-medium">
+                  {showSavedIndicator ? 'រក្សាទុករួចរាល់ (Saved!)' : 'រក្សាទុកស្វ័យប្រវត្ត (Auto Saved)'}
+                </span>
+              </div>
+            </div>
+
           </div>
         </div>
       </nav>
@@ -666,12 +720,14 @@ export default function App() {
 
         {/* TAB 2: STUDENTS REGISTRATION FRAME */}
         {activeTab === 'students' && (
-          <div className="no-print">
+          <div>
             <StudentsTab 
               students={appData.students}
               onAddStudent={handleAddStudent}
               onUpdateStudent={handleUpdateStudent}
               onDeleteStudent={handleDeleteStudent}
+              onImportStudents={handleImportStudents}
+              classInfo={appData.classInfo}
             />
           </div>
         )}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Student, SubjectScores, AcademicPeriod } from '../types';
-import { PERIODS, SUBJECT_NAMES, SUB_SUBJECTS, calculateRecordMetrics, computeParentSubjectAverages, exportToCSV } from '../utils';
-import { Save, CheckCircle, Info, HelpCircle, FileSpreadsheet, Keyboard, Download, Copy, LayoutGrid, ListChecks } from 'lucide-react';
+import { PERIODS, SUBJECT_NAMES, SUB_SUBJECTS, calculateRecordMetrics, computeParentSubjectAverages, exportToCSV, getMention } from '../utils';
+import { Save, CheckCircle, Info, HelpCircle, FileSpreadsheet, Keyboard, Download, Copy, LayoutGrid, ListChecks, TrendingDown, TrendingUp, ArrowRight, Award } from 'lucide-react';
 
 interface GradeEntryTabProps {
   students: Student[];
@@ -13,7 +13,7 @@ export default function GradeEntryTab({ students, scores, onSaveScores }: GradeE
   const [selectedPeriod, setSelectedPeriod] = useState<AcademicPeriod>('nov');
   const [localScores, setLocalScores] = useState<{ [studentId: string]: SubjectScores }>({});
   const [isSavedIndicator, setIsSavedIndicator] = useState(false);
-  const [entryMode, setEntryMode] = useState<'direct' | 'detailed'>('direct');
+  const [entryMode, setEntryMode] = useState<'direct' | 'detailed' | 'summary'>('direct');
 
   // Determine previous academic period based on selection
   const currentIndex = PERIODS.findIndex((p) => p.value === selectedPeriod);
@@ -198,6 +198,105 @@ export default function GradeEntryTab({ students, scores, onSaveScores }: GradeE
     }, 4000);
   };
 
+  function computeRealtimeAverages(studentId: string) {
+    const studentSMap: { [period in AcademicPeriod]?: SubjectScores } = {};
+    
+    PERIODS.forEach((p) => {
+      if (p.value === selectedPeriod) {
+        if (localScores[studentId]) {
+          studentSMap[p.value] = localScores[studentId];
+        }
+      } else {
+        const saved = scores[studentId]?.[p.value];
+        if (saved) {
+          studentSMap[p.value] = saved;
+        }
+      }
+    });
+
+    // Semester 1
+    const s1Months: AcademicPeriod[] = ['nov', 'dec', 'jan', 'feb', 'mar'];
+    const s1MonthAverages: number[] = [];
+    s1Months.forEach((m) => {
+      const s = studentSMap[m];
+      if (s) {
+        const { average } = calculateRecordMetrics(s);
+        s1MonthAverages.push(average);
+      }
+    });
+    const s1ExamScore = studentSMap['sem1_exam'];
+    const s1ExamAverage = s1ExamScore ? calculateRecordMetrics(s1ExamScore).average : 0;
+    
+    const s1MonthlyAverageSum = s1MonthAverages.length > 0 ? s1MonthAverages.reduce((a, b) => a + b, 0) : 0;
+    const s1MonthlyAverage = s1MonthAverages.length > 0 ? s1MonthlyAverageSum / s1MonthAverages.length : 0;
+    
+    let s1Average = 0;
+    if (s1MonthAverages.length > 0 && s1ExamScore) {
+      s1Average = (s1MonthlyAverage + s1ExamAverage) / 2;
+    } else if (s1MonthAverages.length > 0) {
+      s1Average = s1MonthlyAverage;
+    } else if (s1ExamScore) {
+      s1Average = s1ExamAverage;
+    }
+
+    // Semester 2
+    const s2Months: AcademicPeriod[] = ['apr_may', 'jun', 'jul'];
+    const s2MonthAverages: number[] = [];
+    s2Months.forEach((m) => {
+      const s = studentSMap[m];
+      if (s) {
+        const { average } = calculateRecordMetrics(s);
+        s2MonthAverages.push(average);
+      }
+    });
+    const s2ExamScore = studentSMap['sem2_exam'];
+    const s2ExamAverage = s2ExamScore ? calculateRecordMetrics(s2ExamScore).average : 0;
+    
+    const s2MonthlyAverageSum = s2MonthAverages.length > 0 ? s2MonthAverages.reduce((a, b) => a + b, 0) : 0;
+    const s2MonthlyAverage = s2MonthAverages.length > 0 ? s2MonthlyAverageSum / s2MonthAverages.length : 0;
+    
+    let s2Average = 0;
+    if (s2MonthAverages.length > 0 && s2ExamScore) {
+      s2Average = (s2MonthlyAverage + s2ExamAverage) / 2;
+    } else if (s2MonthAverages.length > 0) {
+      s2Average = s2MonthlyAverage;
+    } else if (s2ExamScore) {
+      s2Average = s2ExamAverage;
+    }
+
+    // Year End
+    let yearEndAverage = 0;
+    if (s1Average > 0 && s2Average > 0) {
+      yearEndAverage = (s1Average + s2Average) / 2;
+    } else if (s1Average > 0) {
+      yearEndAverage = s1Average;
+    } else if (s2Average > 0) {
+      yearEndAverage = s2Average;
+    }
+
+    const getSubjectCount = (s: SubjectScores | undefined) => {
+      if (!s) return 5;
+      let count = 5;
+      if (s.lifeSkills !== undefined) count++;
+      if (s.foreignLanguage !== undefined) count++;
+      return count;
+    };
+
+    const s1SubjectCount = getSubjectCount(studentSMap['nov'] || studentSMap['sem1_exam'] || localScores[studentId]);
+    const s2SubjectCount = getSubjectCount(studentSMap['apr_may'] || studentSMap['sem2_exam'] || localScores[studentId]);
+
+    const s1Total = s1Average * s1SubjectCount;
+    const s2Total = s2Average * s2SubjectCount;
+
+    return {
+      s1Average,
+      s1Total,
+      s2Average,
+      s2Total,
+      yearEndAverage
+    };
+  }
+
   const handleExportScoresCSV = () => {
     const periodLabel = PERIODS.find(p => p.value === selectedPeriod)?.labelKh || selectedPeriod;
     const headers = [
@@ -228,12 +327,16 @@ export default function GradeEntryTab({ students, scores, onSaveScores }: GradeE
       'បំណិន (Life Skills)',
       'ភាសាបរទេស (Foreign Language)',
       'សរុប (Total)',
-      'មធ្យមភាគ (Average)'
+      'មធ្យមភាគ (Average)',
+      'មធ្យមភាគ ឆមាសទី១ (Semester 1 Average)',
+      'មធ្យមភាគ ឆមាសទី២ (Semester 2 Average)',
+      'មធ្យមភាគប្រចាំឆ្នាំ (Year End Average)'
     ];
 
     const rows = students.map((student, index) => {
       const studentS = localScores[student.id] || { khmer: 0, math: 0, science: 0, social: 0, artsPE: 0 };
       const { sum, average } = calculateRecordMetrics(studentS);
+      const rt = computeRealtimeAverages(student.id);
       return [
         index + 1,
         student.id,
@@ -260,12 +363,20 @@ export default function GradeEntryTab({ students, scores, onSaveScores }: GradeE
         studentS.lifeSkills !== undefined ? studentS.lifeSkills : '—',
         studentS.foreignLanguage !== undefined ? studentS.foreignLanguage : '—',
         sum.toFixed(2),
-        average.toFixed(2)
+        average.toFixed(2),
+        rt.s1Average > 0 ? rt.s1Average.toFixed(2) : '—',
+        rt.s2Average > 0 ? rt.s2Average.toFixed(2) : '—',
+        rt.yearEndAverage > 0 ? rt.yearEndAverage.toFixed(2) : '—'
       ];
     });
 
     exportToCSV(`តារាងពិន្ទុ_រួមមុខវិជ្ជារង_ខែ_${periodLabel.replace(/\s+/g, '_')}.csv`, headers, rows);
   };
+
+  const decliningStudentsCount = students.filter(student => {
+    const rt = computeRealtimeAverages(student.id);
+    return rt.s1Average > 0 && rt.s2Average > 0 && rt.s2Average < rt.s1Average;
+  }).length;
 
   return (
     <div className="space-y-6">
@@ -317,6 +428,19 @@ export default function GradeEntryTab({ students, scores, onSaveScores }: GradeE
             >
               <ListChecks className="w-3.5 h-3.5 text-indigo-505" />
               តាមមុខវិជ្ជារង (Detailed)
+            </button>
+            <button
+              type="button"
+              onClick={() => setEntryMode('summary')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
+                entryMode === 'summary'
+                  ? 'bg-white text-indigo-950 shadow-xs'
+                  : 'text-gray-500 hover:text-gray-900'
+              }`}
+              title="បង្ហាញតារាងសង្ខេបនៃមធ្យមភាគ និងការផ្ទៀងផ្ទាត់ឆមាស ១ និង ២ របស់សិស្សម្នាក់ៗ"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              តារាងផ្ទៀងផ្ទាត់សង្ខេប (Summary Table)
             </button>
           </div>
 
@@ -383,13 +507,26 @@ export default function GradeEntryTab({ students, scores, onSaveScores }: GradeE
                 {PERIODS.find((p) => p.value === selectedPeriod)?.labelKh}
               </span>
               <span className="ml-2 text-xs px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-850 font-bold">
-                {entryMode === 'direct' ? 'របៀបបញ្ចូលរួម (Direct Mode)' : 'របៀបបញ្ចូលតាមមុខវិជ្ជារង (Detailed Mode)'}
+                {entryMode === 'direct' 
+                  ? 'របៀបបញ្ចូលរួម (Direct Mode)' 
+                  : entryMode === 'detailed' 
+                    ? 'របៀបបញ្ចូលតាមមុខវិជ្ជារង (Detailed Mode)' 
+                    : 'តារាងផ្ទៀងផ្ទាត់សង្ខេបឆមាស (Semester Summary Table)'}
               </span>
             </h3>
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-gray-500 bg-white/80 border border-gray-100 rounded-lg px-2.5 py-1">
+          <div className="flex flex-wrap items-center gap-1.5 text-xs text-gray-500 bg-white/80 border border-gray-100 rounded-lg px-2.5 py-1">
             <Info className="w-3.5 h-3.5 text-indigo-500" />
             <span>ពិន្ទុចន្លោះពី <strong className="text-indigo-600 font-mono">0.0</strong> ដល់ <strong className="text-indigo-600 font-mono">10.0</strong></span>
+            {decliningStudentsCount > 0 && (
+              <span 
+                className="flex items-center gap-1 text-[10px] text-red-650 bg-red-50 border border-red-150 rounded-full px-2 py-0.5 ml-2 font-bold select-none cursor-help animate-pulse" 
+                title={`មានសិស្ស ${decliningStudentsCount} នាក់ ដែលមធ្យមភាគការសិក្សាធ្លាក់ចុះ បើធៀបនឹងឆមាសទី១។`}
+              >
+                <TrendingDown className="w-3 h-3 text-red-500" />
+                សិស្សធ្លាក់ពិន្ទុ៖ {decliningStudentsCount} នាក់
+              </span>
+            )}
           </div>
         </div>
 
@@ -415,9 +552,14 @@ export default function GradeEntryTab({ students, scores, onSaveScores }: GradeE
                       </th>
                     ))}
                     <th className="px-6 py-4 text-center text-indigo-600 font-bold bg-indigo-50/30 border-r border-gray-200">សរុប</th>
-                    <th className="px-6 py-4 text-center text-indigo-700 font-extrabold bg-indigo-50/50">មធ្យមភាគ</th>
+                    <th className="px-6 py-4 text-center text-indigo-700 font-extrabold bg-indigo-50/50 border-r border-gray-200">មធ្យមភាគ</th>
+                    <th className="px-4 py-4 text-center text-amber-750 font-bold bg-amber-50/20 border-r border-gray-200">សរុប ឆ.១ (S1 Total)</th>
+                    <th className="px-4 py-4 text-center text-amber-800 font-extrabold bg-amber-50/40 border-r border-gray-200">មធ្យម ឆ.១ (S1 Avg)</th>
+                    <th className="px-4 py-4 text-center text-teal-750 font-bold bg-teal-50/20 border-r border-gray-200">សរុប ឆ.២ (S2 Total)</th>
+                    <th className="px-4 py-4 text-center text-teal-800 font-extrabold bg-teal-50/40 border-r border-gray-200">មធ្យម ឆ.២ (S2 Avg)</th>
+                    <th className="px-6 py-4 text-center text-purple-750 font-extrabold bg-purple-50/40">ប្រចាំឆ្នាំ (Year)</th>
                   </tr>
-                ) : (
+                ) : entryMode === 'detailed' ? (
                   <>
                     <tr className="bg-gray-50 text-gray-600 text-xs font-bold uppercase tracking-wider border-b border-gray-200">
                       <th rowSpan={2} className="px-3 py-3 w-12 text-center border-r border-gray-250">ល.រ</th>
@@ -435,7 +577,12 @@ export default function GradeEntryTab({ students, scores, onSaveScores }: GradeE
                       <th rowSpan={2} className="px-3 py-3 text-center bg-slate-50/40 border-r border-gray-250 font-bold text-gray-800 min-w-[110px]">ភាសាបរទេស</th>
                       
                       <th rowSpan={2} className="px-4 py-3 text-center text-indigo-600 font-bold bg-indigo-50/30 border-r border-gray-200">សរុប</th>
-                      <th rowSpan={2} className="px-4 py-3 text-center text-indigo-700 font-extrabold bg-indigo-50/50">មធ្យមភាគ</th>
+                      <th rowSpan={2} className="px-4 py-3 text-center text-indigo-700 font-extrabold bg-indigo-50/50 border-r border-gray-200">មធ្យមភាគ</th>
+                      <th rowSpan={2} className="px-3 py-3 text-center text-amber-75 font-bold bg-amber-50/15 border-r border-gray-200">សរុប ឆ.១</th>
+                      <th rowSpan={2} className="px-3 py-3 text-center text-amber-800 font-extrabold bg-amber-50/30 border-r border-gray-200">មធ្យម ឆ.១</th>
+                      <th rowSpan={2} className="px-3 py-3 text-center text-teal-750 font-bold bg-teal-50/15 border-r border-gray-200">សរុប ឆ.២</th>
+                      <th rowSpan={2} className="px-3 py-3 text-center text-teal-800 font-extrabold bg-teal-50/30 border-r border-gray-200">មធ្យម ឆ.២</th>
+                      <th rowSpan={2} className="px-4 py-3 text-center text-purple-750 font-extrabold bg-purple-50/40">ប្រចាំឆ្នាំ (Year)</th>
                     </tr>
                     <tr className="bg-slate-50 text-gray-500 text-[10px] font-bold uppercase tracking-wider border-b border-gray-250">
                       {/* Khmer Subs */}
@@ -455,12 +602,191 @@ export default function GradeEntryTab({ students, scores, onSaveScores }: GradeE
                       <th className="px-1 py-2 text-center bg-amber-50/20 text-amber-808 border-r border-gray-200">សិល្បៈ</th>
                     </tr>
                   </>
+                ) : (
+                  <tr className="bg-indigo-50/80 text-indigo-950 text-xs font-bold uppercase tracking-wider border-b-2 border-indigo-150">
+                    <th className="px-4 py-4 w-12 text-center border-r border-indigo-200">ល.រ</th>
+                    <th className="px-4 py-4 w-28 border-r border-indigo-200">អត្តសញ្ញាណ</th>
+                    <th className="px-5 py-4 border-r border-indigo-200">ឈ្មោះសិស្ស (Student Name)</th>
+                    <th className="px-3 py-4 w-16 text-center border-r border-indigo-200">ភេទ</th>
+                    
+                    {/* Semester 1 Summary */}
+                    <th className="px-4 py-4 text-center bg-amber-50/40 border-r border-indigo-200 font-extrabold text-amber-900 min-w-[180px]">
+                      មធ្យមភាគ ឆមាសទី១ (Semester 1)
+                    </th>
+                    
+                    {/* Semester 2 Summary */}
+                    <th className="px-4 py-4 text-center bg-teal-50/40 border-r border-indigo-200 font-extrabold text-teal-900 min-w-[180px]">
+                      មធ្យមភាគ ឆមាសទី២ (Semester 2)
+                    </th>
+
+                    {/* Comparative Progress */}
+                    <th className="px-4 py-4 text-center bg-purple-50/40 border-r border-indigo-200 font-extrabold text-purple-900 min-w-[150px]">
+                      ការវិវត្តពិន្ទុ (Progress)
+                    </th>
+
+                    {/* Year-End results */}
+                    <th className="px-4 py-4 text-center bg-blue-50/40 font-extrabold text-blue-900 min-w-[180px]">
+                      លទ្ធផលដំណាច់ឆ្នាំ (Year End)
+                    </th>
+                  </tr>
                 )}
               </thead>
               <tbody className="divide-y divide-gray-100 text-xs font-sans">
                 {students.map((student, index) => {
                   const studentS = localScores[student.id] || { khmer: 0, math: 0, science: 0, social: 0, artsPE: 0 };
                   const { sum, average } = calculateRecordMetrics(studentS);
+                  const rt = computeRealtimeAverages(student.id);
+                  const isDropped = rt.s1Average > 0 && rt.s2Average > 0 && rt.s2Average < rt.s1Average;
+
+                  if (entryMode === 'summary') {
+                    const diff = rt.s2Average > 0 && rt.s1Average > 0 ? rt.s2Average - rt.s1Average : null;
+
+                    // Compute mention colors
+                    const getMentionBadgeClass = (avg: number) => {
+                      if (avg >= 9.0) return 'bg-emerald-100 text-emerald-950 border-emerald-300';
+                      if (avg >= 8.0) return 'bg-green-100 text-green-950 border-green-300';
+                      if (avg >= 7.0) return 'bg-sky-100 text-sky-950 border-sky-300';
+                      if (avg >= 6.0) return 'bg-indigo-100 text-indigo-950 border-indigo-300';
+                      if (avg >= 5.0) return 'bg-amber-100 text-amber-950 border-amber-300';
+                      return 'bg-red-100 text-red-950 border-red-300';
+                    };
+
+                    let trendBadge = null;
+                    if (diff !== null) {
+                      if (diff > 0) {
+                        trendBadge = (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-3xs">
+                            <TrendingUp className="w-3.5 h-3.5" />
+                            កើនឡើង +{diff.toFixed(2)}
+                          </span>
+                        );
+                      } else if (diff < 0) {
+                        trendBadge = (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200 shadow-3xs animate-pulse">
+                            <TrendingDown className="w-3.5 h-3.5" />
+                            ធ្លាក់ចុះ {diff.toFixed(2)}
+                          </span>
+                        );
+                      } else {
+                        trendBadge = (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-gray-50 text-gray-500 border border-gray-200">
+                            <ArrowRight className="w-3.5 h-3.5" />
+                            ស្ថិតថេរ 0.00
+                          </span>
+                        );
+                      }
+                    } else {
+                      trendBadge = (
+                        <span className="text-xs text-gray-400 font-medium">
+                          មិនទាន់គ្រប់ទិន្នន័យ
+                        </span>
+                      );
+                    }
+
+                    return (
+                      <tr key={student.id} className="hover:bg-slate-50/60 transition-colors border-b border-gray-105">
+                        <td className="px-3 py-4 text-center font-mono font-bold text-xs text-gray-400 border-r border-gray-100">
+                          {index + 1}
+                        </td>
+                        <td className="px-3 py-4 text-center font-mono font-medium text-xs text-gray-650 border-r border-gray-100 select-all">
+                          {student.id}
+                        </td>
+                        <td className="px-5 py-4 border-r border-gray-100">
+                          <div className="flex items-center gap-2">
+                            {isDropped && (
+                              <div 
+                                className="flex items-center justify-center p-1 bg-red-50 text-red-650 border border-red-200 rounded-lg shrink-0 animate-pulse cursor-help" 
+                                title={`ការព្រមានអំពីការធ្លាក់ចុះពិន្ទុ៖\n• មធ្យមភាគ ឆ.១៖ ${rt.s1Average.toFixed(2)}\n• មធ្យមភាគ ឆ.២៖ ${rt.s2Average.toFixed(2)}\n• ធ្លាក់ចុះ៖ -${(rt.s1Average - rt.s2Average).toFixed(2)}`}
+                              >
+                                <TrendingDown className="w-3.5 h-3.5 stroke-[2.5]" />
+                              </div>
+                            )}
+                            <div>
+                              <span className="font-sans text-xs font-bold text-gray-900 block">{student.nameKh}</span>
+                              <span className="block font-mono text-[9px] text-gray-400 uppercase font-normal mt-0.5">{student.nameEn}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-2 py-4 text-center border-r border-gray-100 whitespace-nowrap">
+                          <span className={`px-2 py-0.5 text-[11px] font-bold rounded-md ${
+                            student.gender === 'ស្រី'
+                              ? 'bg-rose-50 text-rose-600 border border-rose-100'
+                              : 'bg-blue-50 text-blue-600 border border-blue-100'
+                          }`}>
+                            {student.gender}
+                          </span>
+                        </td>
+                        
+                        {/* Semester 1 Summary */}
+                        <td className="px-4 py-4 text-center bg-amber-50/5 border-r border-gray-100">
+                          {rt.s1Average > 0 ? (
+                            <div className="flex flex-col items-center gap-1 justify-center">
+                              <span className="font-mono text-sm font-extrabold text-amber-955">
+                                {rt.s1Average.toFixed(2)}
+                              </span>
+                              <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md border ${getMentionBadgeClass(rt.s1Average)}`}>
+                                {getMention(rt.s1Average)}
+                              </span>
+                              <span className="text-[10px] text-amber-700 font-mono">
+                                សរុប៖ {rt.s1Total.toFixed(1)}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 text-xs select-none">គ្មានទិន្នន័យ</span>
+                          )}
+                        </td>
+
+                        {/* Semester 2 Summary */}
+                        <td className="px-4 py-4 text-center bg-teal-50/5 border-r border-gray-100">
+                          {rt.s2Average > 0 ? (
+                            <div className="flex flex-col items-center gap-1 justify-center">
+                              <span className="font-mono text-sm font-extrabold text-teal-900">
+                                {rt.s2Average.toFixed(2)}
+                              </span>
+                              <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md border ${getMentionBadgeClass(rt.s2Average)}`}>
+                                {getMention(rt.s2Average)}
+                              </span>
+                              <span className="text-[10px] text-teal-750 font-mono">
+                                សរុប៖ {rt.s2Total.toFixed(1)}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 text-xs select-none">គ្មានទិន្នន័យ</span>
+                          )}
+                        </td>
+
+                        {/* Comparative Progress */}
+                        <td className="px-4 py-4 text-center bg-purple-50/5 border-r border-gray-100">
+                          {trendBadge}
+                        </td>
+
+                        {/* Year-End Results */}
+                        <td className="px-4 py-4 text-center bg-blue-50/5">
+                          {rt.yearEndAverage > 0 ? (
+                            <div className="flex flex-col items-center gap-1 justify-center">
+                              <span className="font-mono text-sm font-black text-indigo-950">
+                                {rt.yearEndAverage.toFixed(2)}
+                              </span>
+                              <div className="flex items-center gap-1 flex-wrap justify-center">
+                                <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md border ${getMentionBadgeClass(rt.yearEndAverage)}`}>
+                                  {getMention(rt.yearEndAverage)}
+                                </span>
+                                <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md border ${
+                                  rt.yearEndAverage >= 5.0
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 font-extrabold'
+                                    : 'bg-red-50 text-red-700 border-red-200 font-extrabold'
+                                }`}>
+                                  {rt.yearEndAverage >= 5.0 ? 'ជាប់ (Passed)' : 'ធ្លាក់ (Retained)'}
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 text-xs select-none">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  }
 
                   return (
                     <tr key={student.id} className="hover:bg-gray-50/40 transition-colors">
@@ -472,9 +798,19 @@ export default function GradeEntryTab({ students, scores, onSaveScores }: GradeE
                       </td>
                       <td className="px-4 py-3 font-bold text-gray-800 whitespace-nowrap border-r border-gray-100">
                         <div className="flex items-center justify-between gap-2 group">
-                          <div>
-                            <span className="font-sans text-xs font-bold text-gray-900 block">{student.nameKh}</span>
-                            <span className="block font-mono text-[9px] text-gray-400 uppercase font-normal mt-0.5">{student.nameEn}</span>
+                          <div className="flex items-center gap-2">
+                            {isDropped && (
+                              <div 
+                                className="flex items-center justify-center p-1 bg-red-50 text-red-600 border border-red-200 rounded-lg animate-pulse hover:bg-red-100 transition-all shrink-0 cursor-help" 
+                                title={`ការព្រមានអំពីការធ្លាក់ចុះពិន្ទុ៖\n• មធ្យមភាគ ឆ.១៖ ${rt.s1Average.toFixed(2)}\n• មធ្យមភាគ ឆ.២៖ ${rt.s2Average.toFixed(2)}\n• ធ្លាក់ចុះ៖ -${(rt.s1Average - rt.s2Average).toFixed(2)}`}
+                              >
+                                <TrendingDown className="w-3.5 h-3.5 stroke-[2.5]" />
+                              </div>
+                            )}
+                            <div>
+                              <span className="font-sans text-xs font-bold text-gray-900 block">{student.nameKh}</span>
+                              <span className="block font-mono text-[9px] text-gray-400 uppercase font-normal mt-0.5">{student.nameEn}</span>
+                            </div>
                           </div>
                           {hasPreviousPeriod && (
                             <button
@@ -700,9 +1036,33 @@ export default function GradeEntryTab({ students, scores, onSaveScores }: GradeE
                       </td>
 
                       {/* Average Cell */}
-                      <td className="px-4 py-3.5 text-center bg-indigo-50/40 text-indigo-950 font-mono font-extrabold text-sm whitespace-nowrap">
+                      <td className="px-4 py-3.5 text-center bg-indigo-50/40 text-indigo-950 font-mono font-extrabold text-sm whitespace-nowrap border-r border-gray-200">
                         {average.toFixed(2)}
                       </td>
+
+                      {/* Semester 1, 2 and Year End Real-Time calculations */}
+                      {(() => {
+                        const rt = computeRealtimeAverages(student.id);
+                        return (
+                          <>
+                            <td className="px-3 py-3.5 text-center bg-amber-50/5 text-amber-700 font-mono font-bold text-xs border-r border-gray-100">
+                              {rt.s1Total > 0 ? rt.s1Total.toFixed(1) : '—'}
+                            </td>
+                            <td className="px-3 py-3.5 text-center bg-amber-50/20 text-amber-900 font-mono font-extrabold text-sm whitespace-nowrap border-r border-gray-100">
+                              {rt.s1Average > 0 ? rt.s1Average.toFixed(2) : '—'}
+                            </td>
+                            <td className="px-3 py-3.5 text-center bg-teal-50/5 text-teal-700 font-mono font-bold text-xs border-r border-gray-100">
+                              {rt.s2Total > 0 ? rt.s2Total.toFixed(1) : '—'}
+                            </td>
+                            <td className="px-3 py-3.5 text-center bg-teal-50/20 text-teal-900 font-mono font-extrabold text-sm whitespace-nowrap border-r border-gray-100">
+                              {rt.s2Average > 0 ? rt.s2Average.toFixed(2) : '—'}
+                            </td>
+                            <td className="px-4 py-3.5 text-center bg-purple-50/15 text-purple-900 font-mono font-extrabold text-sm whitespace-nowrap">
+                              {rt.yearEndAverage > 0 ? rt.yearEndAverage.toFixed(2) : '—'}
+                            </td>
+                          </>
+                        );
+                      })()}
                     </tr>
                   );
                 })}
