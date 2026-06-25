@@ -97,6 +97,16 @@ export interface AttendanceRecord {
   notes?: string; // យោបល់គ្រូ និងការសង្កេតឥរិយាបថ (Teacher's monthly notes & comments for report cards)
 }
 
+export interface Reminder {
+  id: string;
+  titleKh: string;
+  descriptionKh: string;
+  date: string; // YYYY-MM-DD format
+  type: 'exam' | 'deadline' | 'holiday' | 'other';
+  isRead: boolean;
+  isSystem?: boolean;
+}
+
 // Full app state to easily sync to localStorage
 export interface AppData {
   students: Student[];
@@ -108,4 +118,5 @@ export interface AppData {
     classTeacher: string;
     schoolName: string;
   };
+  reminders?: Reminder[];
 }

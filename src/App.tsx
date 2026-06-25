@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Student, SubjectScores, AttendanceRecord, AppData, AcademicPeriod } from './types';
+import { Student, SubjectScores, AttendanceRecord, AppData, AcademicPeriod, Reminder } from './types';
 import { SAMPLE_STUDENTS, SAMPLE_SCORES, SAMPLE_ATTENDANCE } from './sampleData';
 import { exportStudentProfilesToCSV, exportCumulativeGradesToCSV, exportCumulativeAttendanceToCSV } from './utils';
 
@@ -9,6 +9,7 @@ import GradeEntryTab from './components/GradeEntryTab';
 import RankingsTab from './components/RankingsTab';
 import AttendanceTab from './components/AttendanceTab';
 import DocumentsTab from './components/DocumentsTab';
+import DashboardReminders, { toKhmerDigits } from './components/DashboardReminders';
 
 // App Icons
 import { 
@@ -27,6 +28,81 @@ import {
   Building,
   Check
 } from 'lucide-react';
+
+const DEFAULT_REMINDERS: Reminder[] = [
+  {
+    id: 'sys-rem-1',
+    titleKh: 'ប្រឡងប្រចាំខែវិច្ឆិកា',
+    descriptionKh: 'កាលបរិច្ឆេទប្រឡងប្រចាំខែវិច្ឆិកាជិតមកដល់ហើយ។ សូមលោកគ្រូ-អ្នកគ្រូរៀបចំបញ្ជីស្រង់វត្តមានសិស្ស និងសន្លឹកកិច្ចការប្រឡងឱ្យបានរួចរាល់។',
+    date: '2024-11-28',
+    type: 'exam',
+    isRead: false,
+    isSystem: true
+  },
+  {
+    id: 'sys-rem-2',
+    titleKh: 'ផុតកំណត់បញ្ចូលពិន្ទុខែធ្នូ',
+    descriptionKh: 'កាលបរិច្ឆេទផុតកំណត់បញ្ចូលពិន្ទុប្រចាំខែធ្នូគឺថ្ងៃទី ០៥ ខែមករា។ សូមលោកគ្រូ-អ្នកគ្រូប្រញាប់បញ្ចូលពិន្ទុឱ្យបានទាន់ពេលវេលា។',
+    date: '2025-01-05',
+    type: 'deadline',
+    isRead: false,
+    isSystem: true
+  },
+  {
+    id: 'sys-rem-3',
+    titleKh: 'ការប្រឡងឆមាសលើកទី១',
+    descriptionKh: 'ការប្រឡងឆមាសទី១ នឹងប្រព្រឹត្តទៅចាប់ពីថ្ងៃទី ២៤ ដល់ ២៨ ខែមីនា។ សូមត្រៀមរៀបចំបញ្ជីឈ្មោះសិស្ស និងមេរៀនឡើងវិញសម្រាប់សិស្ស។',
+    date: '2025-03-24',
+    type: 'exam',
+    isRead: false,
+    isSystem: true
+  },
+  {
+    id: 'sys-rem-4',
+    titleKh: 'ផុតកំណត់បញ្ចូលពិន្ទុឆមាសទី១',
+    descriptionKh: 'សូមបញ្ចូលពិន្ទុប្រឡងឆមាសទី១ និងពិន្ទុមធ្យមភាគឆមាសទី១ ឱ្យបានរួចរាល់ មុនថ្ងៃទី ០៥ ខែមេសា ដើម្បីងាយស្រួលសរុបលទ្ធផលមុនចូលឆ្នាំខ្មែរ។',
+    date: '2025-04-05',
+    type: 'deadline',
+    isRead: false,
+    isSystem: true
+  },
+  {
+    id: 'sys-rem-5',
+    titleKh: 'ពិធីបុណ្យចូលឆ្នាំថ្មីប្រពៃណីជាតិខ្មែរ',
+    descriptionKh: 'ថ្ងៃឈប់សម្រាកចូលឆ្នាំថ្មីប្រពៃណីជាតិខ្មែរ (សង្ក្រាន្តឆ្នាំថ្មី) នឹងចាប់ផ្តើមពីថ្ងៃទី ១៣ ដល់ ១៦ ខែមេសា។',
+    date: '2025-04-13',
+    type: 'holiday',
+    isRead: false,
+    isSystem: true
+  },
+  {
+    id: 'sys-rem-6',
+    titleKh: 'ការប្រឡងប្រចាំខែមិថុនា',
+    descriptionKh: 'ការប្រឡងប្រចាំខែមិថុនា។ សូមត្រៀមស្រង់វត្តមាន និងបញ្ចូលពិន្ទុសិស្សឱ្យបានទាន់ពេលវេលា។',
+    date: '2025-06-28',
+    type: 'exam',
+    isRead: false,
+    isSystem: true
+  },
+  {
+    id: 'sys-rem-7',
+    titleKh: 'ការប្រឡងឆមាសលើកទី២',
+    descriptionKh: 'ការប្រឡងឆមាសទី២ នឹងប្រព្រឹត្តទៅចាប់ពីថ្ងៃទី ២១ ដល់ ២៥ ខែកក្កដា។ នេះជាការប្រឡងចុងក្រោយបំផុតនៃឆ្នាំសិក្សា។',
+    date: '2025-07-21',
+    type: 'exam',
+    isRead: false,
+    isSystem: true
+  },
+  {
+    id: 'sys-rem-8',
+    titleKh: 'ផុតកំណត់សរុបលទ្ធផលចុងឆ្នាំ',
+    descriptionKh: 'កាលបរិច្ឆេទចុងក្រោយសម្រាប់បញ្ចូលពិន្ទុឆមាសទី២ និងការបោះពុម្ពសៀវភៅតាមដាន (Report Cards) ជូនអាណាព្យាបាលគឺត្រឹមថ្ងៃទី ៣១ ខែកក្កដា។',
+    date: '2025-07-31',
+    type: 'deadline',
+    isRead: false,
+    isSystem: true
+  }
+];
 
 const STORAGE_KEY = 'khmer_primary_gradebook_db_v1';
 
@@ -49,6 +125,9 @@ export default function App() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved) as AppData;
+        if (!parsed.reminders) {
+          parsed.reminders = DEFAULT_REMINDERS;
+        }
         setAppData(parsed);
         // Load settings inputs
         if (parsed.classInfo) {
@@ -89,7 +168,8 @@ export default function App() {
         gradeClass: 'ថ្នាក់ទី ៥ អា',
         classTeacher: 'កែវ ច័ន្ទតារា',
         academicYear: '២០២៤-២០២៥'
-      }
+      },
+      reminders: DEFAULT_REMINDERS
     };
     setAppData(initialData);
     setSchoolName(initialData.classInfo.schoolName);
@@ -117,6 +197,56 @@ export default function App() {
     setAppData(updated);
     saveToLocalStorage(updated);
     setShowSettings(false);
+  };
+
+  // Notification / Reminder Actions
+  const handleMarkAsRead = (id: string) => {
+    if (!appData) return;
+    const updatedReminders = (appData.reminders || []).map(r => 
+      r.id === id ? { ...r, isRead: true } : r
+    );
+    const updated = { ...appData, reminders: updatedReminders };
+    setAppData(updated);
+    saveToLocalStorage(updated);
+  };
+
+  const handleMarkAsUnread = (id: string) => {
+    if (!appData) return;
+    const updatedReminders = (appData.reminders || []).map(r => 
+      r.id === id ? { ...r, isRead: false } : r
+    );
+    const updated = { ...appData, reminders: updatedReminders };
+    setAppData(updated);
+    saveToLocalStorage(updated);
+  };
+
+  const handleDeleteReminder = (id: string) => {
+    if (!appData) return;
+    const updatedReminders = (appData.reminders || []).filter(r => r.id !== id);
+    const updated = { ...appData, reminders: updatedReminders };
+    setAppData(updated);
+    saveToLocalStorage(updated);
+  };
+
+  const handleResetDefaultReminders = () => {
+    if (!appData) return;
+    const updated = { ...appData, reminders: DEFAULT_REMINDERS };
+    setAppData(updated);
+    saveToLocalStorage(updated);
+  };
+
+  const handleAddReminder = (newReminder: Omit<Reminder, 'id' | 'isRead'>) => {
+    if (!appData) return;
+    const added: Reminder = {
+      ...newReminder,
+      id: `custom-rem-${Date.now()}`,
+      isRead: false,
+      isSystem: false
+    };
+    const updatedReminders = [added, ...(appData.reminders || [])];
+    const updated = { ...appData, reminders: updatedReminders };
+    setAppData(updated);
+    saveToLocalStorage(updated);
   };
 
   // Student Actions
@@ -463,6 +593,11 @@ export default function App() {
             >
               <ClipboardCheck className="w-4 h-4" />
               ផ្ទាំងគ្រប់គ្រង (Home)
+              {appData && appData.reminders && appData.reminders.filter(r => !r.isRead).length > 0 && (
+                <span className="bg-rose-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold ml-1 animate-pulse">
+                  {toKhmerDigits(appData.reminders.filter(r => !r.isRead).length)}
+                </span>
+              )}
             </button>
 
             <button
@@ -637,6 +772,16 @@ export default function App() {
               </div>
 
             </div>
+
+            {/* Dashboard Reminders/Notifications Panel */}
+            <DashboardReminders
+              reminders={appData.reminders || []}
+              onMarkAsRead={handleMarkAsRead}
+              onMarkAsUnread={handleMarkAsUnread}
+              onDelete={handleDeleteReminder}
+              onAdd={handleAddReminder}
+              onResetDefaults={handleResetDefaultReminders}
+            />
 
             {/* Consolidated Excel/CSV Export Tools Panel */}
             <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">

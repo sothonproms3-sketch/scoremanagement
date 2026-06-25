@@ -30,8 +30,12 @@ interface DocumentsTabProps {
 
 export default function DocumentsTab({ students, scores, attendance, classInfo }: DocumentsTabProps) {
   const [selectedStudentId, setSelectedStudentId] = useState<string>(students[0]?.id || '');
-  const [docType, setDocType] = useState<'tracker' | 'biography' | 'ageSummary' | 'ageList'>('tracker');
+  const [docType, setDocType] = useState<'tracker' | 'biography' | 'ageSummary' | 'ageList' | 'certificate'>('tracker');
   const [selectedPeriod, setSelectedPeriod] = useState<string>('yearEnd');
+  const [schoolCluster, setSchoolCluster] = useState<string>('អូរស្រឡៅ');
+  const [certCustomRank, setCertCustomRank] = useState<string>('');
+  const [certLunarDate, setCertLunarDate] = useState<string>('ថ្ងៃ ចន្ទ ១ រោច ខែ អស្សុជ ឆ្នាំ ថោះ បញ្ចស័ក ព.ស.២៥៦៧');
+  const [certSolarDate, setCertSolarDate] = useState<string>('វត្តចែង, ថ្ងៃទី ៣០ ខែ តុលា ឆ្នាំ ២០២៣');
   const [teacherGender, setTeacherGender] = useState<'ប្រុស' | 'ស្រី'>('ស្រី');
   const [teacherAge, setTeacherAge] = useState<string>('៤១');
   const [teacherIndigenous, setTeacherIndigenous] = useState<string>('ទេ/គ្មាន');
@@ -905,72 +909,45 @@ export default function DocumentsTab({ students, scores, attendance, classInfo }
                     <td className="border border-black px-1 py-0.5 font-mono">{toKhmerDigits(disabilityCounts.chronicIllness.total)}</td>
                     <td className="border border-black px-1 py-0.5 font-mono">{toKhmerDigits(disabilityCounts.chronicIllness.female)}</td>
                   </tr>
-                  
-                  <tr className="bg-gray-55/40 font-bold"><td colSpan={3} className="border border-black px-2 py-0.5 text-left text-slate-700">សិស្សជួបការលំបាក (Vulnerable Students)</td></tr>
                   <tr>
-                    <td className="border border-black px-2 py-0.5 text-left pl-4">១. មកពីគ្រួសារក្រីក្រលំបាក (Poor family)</td>
+                    <td className="border border-black px-2 py-0.5 text-left pl-4">៣. គ្រួសារក្រីក្រមានប័ណ្ណក្រីក្រ (Poor family)</td>
                     <td className="border border-black px-1 py-0.5 font-mono">{toKhmerDigits(disabilityCounts.poorFamily.total)}</td>
                     <td className="border border-black px-1 py-0.5 font-mono">{toKhmerDigits(disabilityCounts.poorFamily.female)}</td>
                   </tr>
                   <tr>
-                    <td className="border border-black px-2 py-0.5 text-left pl-4">២. កុមារកំព្រា (Orphaned)</td>
-                    <td className="border border-black px-1 py-0.5 font-mono">{toKhmerDigits(disabilityCounts.orphan.total)}</td>
-                    <td className="border border-black px-1 py-0.5 font-mono">{toKhmerDigits(disabilityCounts.orphan.female)}</td>
+                    <td className="border border-black px-2 py-0.5 text-left pl-4">៤. កុមាររងគ្រោះផ្សេងៗ (Other disadvantaged)</td>
+                    <td className="border border-black px-1 py-0.5 font-mono">{toKhmerDigits(disabilityCounts.otherDisadvantaged.total)}</td>
+                    <td className="border border-black px-1 py-0.5 font-mono">{toKhmerDigits(disabilityCounts.otherDisadvantaged.female)}</td>
                   </tr>
-                  <tr>
-                    <td className="border border-black px-2 py-0.5 text-left pl-4">៣. គ្រួសាររងគ្រោះដោយ HIV/AIDS</td>
-                    <td className="border border-black px-1 py-0.5 font-mono">{toKhmerDigits(disabilityCounts.hivAids.total)}</td>
-                    <td className="border border-black px-1 py-0.5 font-mono">{toKhmerDigits(disabilityCounts.hivAids.female)}</td>
-                  </tr>
-                  <tr>
-                    <td className="border border-black px-2 py-0.5 text-left pl-4">៤. គ្រួសារងាយរងគ្រោះផ្សេងៗ (Vulnerable family)</td>
-                    <td className="border border-black px-1 py-0.5 font-mono">{toKhmerDigits(disabilityCounts.vulnerableFamily.total)}</td>
-                    <td className="border border-black px-1 py-0.5 font-mono">{toKhmerDigits(disabilityCounts.vulnerableFamily.female)}</td>
-                  </tr>
-                  <tr>
-                    <td className="border border-black px-2 py-0.5 text-left pl-4">៥. គ្រួសាររងគ្រោះដោយគ្រឿងញៀន (Drug affected)</td>
-                    <td className="border border-black px-1 py-0.5 font-mono">{toKhmerDigits(disabilityCounts.drugAffected.total)}</td>
-                    <td className="border border-black px-1 py-0.5 font-mono">{toKhmerDigits(disabilityCounts.drugAffected.female)}</td>
-                  </tr>
-                  <tr>
-                    <td className="border border-black px-2 py-0.5 text-left pl-4">៦. គ្រួសារងាយរងគ្រោះដទៃទៀត (Other vulnerable)</td>
-                    <td className="border border-black px-1 py-0.5 font-mono">{toKhmerDigits(disabilityCounts.otherVulnerable.total)}</td>
-                    <td className="border border-black px-1 py-0.5 font-mono">{toKhmerDigits(disabilityCounts.otherVulnerable.female)}</td>
-                  </tr>
-
-                  <tr className="bg-gray-100 font-bold text-[11px]">
-                    <td className="border border-black px-2 py-1 text-left">សរុប (Grand Total)</td>
-                    <td className="border border-black px-1 py-1 font-mono">{toKhmerDigits(totalDisabilityTotal)}</td>
-                    <td className="border border-black px-1 py-1 font-mono">{toKhmerDigits(totalDisabilityFemale)}</td>
+                  <tr className="bg-gray-100 font-bold">
+                    <td className="border border-black px-2 py-1 text-left">សរុប (Total)</td>
+                    <td className="border border-black px-1 py-1.5 font-mono">{toKhmerDigits(totalDisabilityTotal)}</td>
+                    <td className="border border-black px-1 py-1.5 font-mono">{toKhmerDigits(totalDisabilityFemale)}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
 
           </div>
-
         </div>
-
-        {/* BOTTOM SIGNATURES SECTION */}
-        <div className="grid grid-cols-2 gap-4 text-center text-xs mt-6 pt-4 border-t border-dashed border-gray-300">
-          <div className="space-y-16">
-            <div className="font-bold leading-normal">
-              បានឃើញ និងពិនិត្យត្រឹមត្រូវ<br />
-              នាយកសាលាបឋមសិក្សា
-            </div>
-            <div className="text-gray-400 font-mono text-[9px]">(ហត្ថលេខា និងត្រា)</div>
-          </div>
-          <div className="space-y-12">
-            <div className="italic text-[10px] text-gray-500">
-              ថ្ងៃ...................ខែ............ឆ្នាំ............... ព.ស.២៥៧០
-            </div>
+        
+        {/* Signatures & Stamps Footer */}
+        <div className="grid grid-cols-2 text-center text-[10px] pt-6 gap-6">
+          <div className="space-y-14">
+            <div className="italic text-gray-500">បានឃើញ និងបញ្ជាក់ត្រឹមត្រូវ</div>
             <div className="space-y-1 font-bold">
-              <div className="leading-normal">គ្រូបន្ទុកថ្នាក់</div>
-              <div className="underline text-gray-900 pt-4 block">{classInfo.classTeacher}</div>
+              <div>នាយកសាលាបឋមសិក្សា</div>
+              <div className="text-gray-300">....................................................</div>
+            </div>
+          </div>
+          <div className="space-y-14">
+            <div className="italic text-gray-500">ថ្ងៃទី........ខែ........ឆ្នាំ........ ព.ស.២៥៧០</div>
+            <div className="space-y-1 font-bold">
+              <div>គ្រូបន្ទុកថ្នាក់</div>
+              <div className="underline text-gray-950 block">{classInfo.classTeacher || 'កែវ ច័ន្ទតារា'}</div>
             </div>
           </div>
         </div>
-
       </div>
     );
   };
@@ -1000,7 +977,7 @@ export default function DocumentsTab({ students, scores, attendance, classInfo }
 
         {/* DOCUMENT TITLE */}
         <div className="text-center py-2 space-y-1">
-          <h2 className="font-moul text-xs text-gray-900 tracking-wider">တារាងបញ្ជីស្រង់អាយុសិស្សគ្រប់រូប (លម្អិត)</h2>
+          <h2 className="font-moul text-xs text-gray-900 tracking-wider">តារាងបញ្ជីស្រង់អាយុសិស្សគ្រប់រូប (លម្អិត)</h2>
           <div className="flex justify-center gap-6 font-bold text-[10px] mt-1 text-gray-800">
             <p>ថ្នាក់៖ <span className="underline">{classInfo.gradeClass}</span></p>
             <p>ឆ្នាំសិក្សា៖ <span className="underline">{toKhmerDigits(classInfo.academicYear)}</span></p>
@@ -1016,8 +993,167 @@ export default function DocumentsTab({ students, scores, attendance, classInfo }
                 <th className="border border-black p-1.5 w-10">ល.រ</th>
                 <th className="border border-black p-1.5 w-20">អត្តលេខ</th>
                 <th className="border border-black p-1.5 text-left pl-3">នាមត្រកូល និងនាមខ្លួន (ឈ្មោះខ្មែរ)</th>
-                <th className="border border-black p-1.5 text-left pl-3">ឈ្មោះជាអក្សរឡ�  // Helper function to render high fidelity document content natively
-  const renderDocumentContent = () => {
+                <th className="border border-black p-1.5 text-left pl-3">ឈ្មោះជាអក្សរឡាតាំង (English Name)</th>
+                <th className="border border-black p-1.5 w-12">ភេទ</th>
+                <th className="border border-black p-1.5 w-24">ថ្ងៃ ខែ ឆ្នាំកំណើត</th>
+                <th className="border border-black p-1.5 w-12">អាយុ</th>
+                <th className="border border-black p-1.5 text-left pl-3">សង្កេត/ផ្សេងៗ</th>
+              </tr>
+            </thead>
+            <tbody>
+              {students.map((student, idx) => {
+                const age = getStudentAge(student.dob, classInfo.academicYear);
+                return (
+                  <tr key={student.id} className="hover:bg-gray-50">
+                    <td className="border border-black p-1.5 font-mono">{toKhmerDigits(idx + 1)}</td>
+                    <td className="border border-black p-1.5 font-mono">{student.id}</td>
+                    <td className="border border-black p-1.5 text-left pl-3 font-bold">{student.nameKh}</td>
+                    <td className="border border-black p-1.5 text-left pl-3 font-mono uppercase">{student.nameEn}</td>
+                    <td className="border border-black p-1.5">{student.gender}</td>
+                    <td className="border border-black p-1.5 font-mono">{student.dob}</td>
+                    <td className="border border-black p-1.5 font-mono">{toKhmerDigits(age)}</td>
+                    <td className="border border-black p-1.5 text-left pl-3 text-[9px] text-gray-500">
+                      {student.status === 'abandoned' ? 'បោះបង់' : student.status === 'transferred' ? 'ផ្ទេរចេញ' : 'កំពុងសិក្សា'}
+                    </td>
+                  </tr>
+                );
+              })}
+              <tr className="bg-gray-50 font-bold">
+                <td colSpan={6} className="border border-black p-1.5 text-right pr-4">អាយុសរុបរួម / មធ្យមភាគអាយុ៖</td>
+                <td className="border border-black p-1.5 font-mono">{toKhmerDigits(totalAge)}</td>
+                <td className="border border-black p-1.5 text-left pl-3 font-mono">មធ្យម៖ {toKhmerDigits(avgAge)} ឆ្នាំ</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        {/* Footers */}
+        <div className="grid grid-cols-2 text-center text-[10px] pt-4 gap-4">
+          <div className="space-y-12">
+            <div className="italic text-gray-500">បានឃើញ និងបញ្ជាក់ត្រឹមត្រូវ</div>
+            <div className="space-y-1 font-bold">
+              <div>នាយកសាលាបឋមសិក្សា</div>
+              <div className="text-gray-300">....................................................</div>
+            </div>
+          </div>
+          <div className="space-y-12">
+            <div className="italic text-gray-500">ថ្ងៃទី........ខែ........ឆ្នាំ........ ព.ស.២៥៧០</div>
+            <div className="space-y-1 font-bold">
+              <div>គ្រូបន្ទុកថ្នាក់</div>
+              <div className="underline text-gray-900 block">{classInfo.classTeacher}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderCertificateContent = () => {
+    if (!selectedStudent) {
+      return (
+        <div className="text-center py-12 text-gray-500 font-sans">
+          សូមជ្រើសរើសសិស្សដើម្បីបង្ហាញប័ណ្ណសរសើរ។
+        </div>
+      );
+    }
+
+    // Get rank of this student from summary
+    const studentSum = studentSummary;
+    let rankText = '—';
+    if (studentSum) {
+      rankText = toKhmerDigits(studentSum.yearEndRank);
+    }
+    
+    const displayRank = certCustomRank || `ចំណាត់ថ្នាក់ទី ${rankText}`;
+
+    return (
+      <div id="print-certificate" className="relative p-8 bg-white text-black font-sans min-h-[500px] flex flex-col justify-between overflow-hidden">
+        {/* PREMIUM DOUBLE GOLD BORDER */}
+        <div className="absolute inset-4 border-[6px] border-amber-600 rounded-lg pointer-events-none" />
+        <div className="absolute inset-6 border-[2px] border-amber-400 rounded-md pointer-events-none" />
+        
+        {/* ORNATE CORNERS */}
+        <div className="absolute top-8 left-8 text-amber-600 font-extrabold text-lg select-none">✥</div>
+        <div className="absolute top-8 right-8 text-amber-600 font-extrabold text-lg select-none">✥</div>
+        <div className="absolute bottom-8 left-8 text-amber-600 font-extrabold text-lg select-none">✥</div>
+        <div className="absolute bottom-8 right-8 text-amber-600 font-extrabold text-lg select-none">✥</div>
+
+        <div className="relative z-10 space-y-4 px-8 py-4">
+          {/* KINGDOM HEADERS */}
+          <div className="text-center space-y-1">
+            <h1 className="font-moul text-[13px] text-amber-950 tracking-wider">ព្រះរាជាណាចក្រកម្ពុជា</h1>
+            <h2 className="font-moul text-[10px] text-amber-900 tracking-normal">ជាតិ សាសនា ព្រះមហាក្សត្រ</h2>
+            <div className="flex justify-center">
+              <span className="text-amber-600 text-xs tracking-widest font-bold">✥ ✥ ✥</span>
+            </div>
+          </div>
+
+          {/* SCHOOL INFORMATION */}
+          <div className="text-left text-[10px] font-bold text-gray-800 space-y-0.5">
+            <div>មន្ទីរអប់រំ យុវជន និងកីឡាខេត្ត៖ <span className="underline">{schoolProvince}</span></div>
+            <div>ការិយាល័យអប់រំ យុវជន និងកីឡាស្រុក៖ <span className="underline">{schoolDistrict}</span></div>
+            <div>សាលាបឋមសិក្សា៖ <span className="underline">{classInfo.schoolName}</span></div>
+            <div>ក្រុមកល្យាណសាលា៖ <span className="underline">{schoolCluster}</span></div>
+          </div>
+
+          {/* MAIN CERTIFICATE TITLE */}
+          <div className="text-center py-2">
+            <h2 className="font-moul text-2xl text-red-700 tracking-widest uppercase drop-shadow-sm filter">ប័ណ្ណសរសើរ</h2>
+            <div className="w-32 h-0.5 bg-gradient-to-r from-transparent via-amber-500 to-transparent mx-auto mt-1" />
+          </div>
+
+          {/* RECIPIENT AND PERFORMANCE STATEMENT */}
+          <div className="text-center space-y-4 font-sans text-xs max-w-xl mx-auto leading-relaxed">
+            <p className="font-moul text-sm text-amber-950">នាយកសាលាបឋមសិក្សា {classInfo.schoolName}</p>
+            
+            <p className="text-[11px] font-medium">សូមជូនប័ណ្ណសរសើរនេះចំពោះ៖</p>
+            
+            <div className="py-1">
+              <span className="font-moul text-base text-indigo-950 border-b-2 border-dashed border-amber-600 px-6 pb-1">
+                {selectedStudent.gender === 'ស្រី' ? 'កុមារី' : 'កុមារ'} {selectedStudent.nameKh}
+              </span>
+            </div>
+
+            <p className="text-[11px] font-medium">
+              ជាសិស្សថ្នាក់ទី៖ <strong className="font-bold underline text-amber-950">{classInfo.gradeClass}</strong> នៃឆ្នាំសិក្សា៖ <strong className="font-mono font-bold underline text-amber-950">{toKhmerDigits(classInfo.academicYear)}</strong>
+            </p>
+
+            <div className="bg-amber-50/50 border border-amber-100 p-2.5 rounded-xl inline-block px-8">
+              <p className="font-moul text-xs text-amber-900 leading-normal">
+                {displayRank}
+              </p>
+              <p className="text-[10px] text-gray-500 font-medium mt-1">
+                ដែលមានសីលធម៌ល្អ សុជីវធម៌ថ្លៃថ្នូរ និងខិតខំប្រឹងប្រែងរៀនសូត្រទទួលបានលទ្ធផលល្អគួរជាទីមោទនៈ។
+              </p>
+            </div>
+          </div>
+
+          {/* SIGNATURES AND DATES */}
+          <div className="grid grid-cols-2 text-center text-[10px] pt-6 gap-6">
+            <div className="space-y-12">
+              <div className="font-bold text-gray-800 font-sans">បានឃើញ និងបញ្ជាក់ត្រឹមត្រូវ<br />នាយកសាលាបឋមសិក្សា</div>
+              <div className="space-y-1 font-bold">
+                <div className="text-gray-300">....................................................</div>
+              </div>
+            </div>
+            
+            <div className="space-y-12">
+              <div className="space-y-1 font-bold text-gray-800">
+                <div className="italic text-gray-500 font-normal">{certLunarDate}</div>
+                <div>{certSolarDate}</div>
+                <div className="pt-2 font-sans">គ្រូបន្ទុកថ្នាក់</div>
+              </div>
+              <div className="space-y-1 font-bold">
+                <div className="underline text-gray-900 block font-sans">{classInfo.classTeacher}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderDocumentContent = () => {  const renderDocumentContent = () => {
     const kDate = getKhmerDateStrings();
 
     if (docType === 'tracker') {
@@ -1207,124 +1343,19 @@ export default function DocumentsTab({ students, scores, attendance, classInfo }
                             <div className="border-t border-dashed border-gray-200 pt-2.5 space-y-2 mt-4">
                               <span className="text-[10px] text-gray-400 block uppercase font-bold tracking-wider">សេចក្តីសង្កេតបន្ថែមរបស់គ្រូ៖</span>
                               <div className="h-28 flex flex-col justify-between">
-                                <div className="border-b border-dotted border-gray-300 pb-0.5 w-full h-5"></div>
-                                <div className="border-b border-dotted border-gray-300 pb-0.5 w-full h-5"></div>
-                                <div className="border-b border-dotted border-gray-300 pb-0.5 w-full h-5"></div>
-                                <div className="border-b border-dotted border-gray-300 pb-0.5 w-full h-5"></div>
+                                <div className="border-b border-dotted border-gray-300 h-6"></div>
+                                <div className="border-b border-dotted border-gray-300 h-6"></div>
+                                <div className="border-b border-dotted border-gray-300 h-6"></div>
+                                <div className="border-b border-dotted border-gray-300 h-6"></div>
                               </div>
                             </div>
                           </div>
                         </td>
                       ) : null}
+
                     </tr>
                   );
                 })}
-
-                {/* BOTTOM SUMMARY STATS (Inside table body to preserve alignment) */}
-                <tr className="bg-amber-50/50 font-bold border-t-2 border-amber-300 text-center">
-                  <td colSpan={2} className="px-4 py-3 border-r border-gray-300 text-right font-moul text-[10px] text-amber-955 uppercase flex items-center justify-end gap-1.5 h-full">
-                    <Award className="w-4 h-4 text-amber-600" /> ពិន្ទុសរុបរួម (Total Score)៖
-                  </td>
-                  <td className="px-2 py-3 border-r border-gray-300 font-mono text-sm text-amber-950 bg-amber-100">
-                    {total > 0 ? total.toFixed(1) : '—'}
-                  </td>
-                  <td className="px-2 py-3 border-r border-gray-300 font-mono text-sm text-amber-955">
-                    —
-                  </td>
-                  <td colSpan={2} className="px-2 py-3 border-r border-gray-300 font-normal italic text-[10px] text-gray-500 bg-white/20">
-                    —
-                  </td>
-                </tr>
-
-                <tr className="bg-amber-50/70 font-bold border-t border-amber-300 text-center">
-                  <td colSpan={2} className="px-4 py-3 border-r border-gray-300 text-right font-moul text-[10px] text-amber-955 uppercase">
-                    មធ្យមភាគរួម (Average)៖
-                  </td>
-                  <td className="px-2 py-3 border-r border-gray-300 font-mono text-sm text-indigo-950 bg-amber-100">
-                    {average > 0 ? average.toFixed(2) : '—'}
-                  </td>
-                  <td className="px-2 py-3 border-r border-gray-300 text-center text-amber-900 font-sans text-xs">
-                    {average > 0 ? getMention(average) : '—'}
-                  </td>
-                  <td colSpan={2} className="px-2 py-3 border-r border-gray-300 font-normal italic text-[10px] text-gray-500 bg-white/20">
-                    —
-                  </td>
-                </tr>
-
-                <tr className="bg-indigo-50/30 font-bold border-t border-indigo-200 text-center">
-                  <td colSpan={2} className="px-4 py-3 border-r border-gray-300 text-right font-moul text-[10px] text-indigo-950 uppercase">
-                    ចំណាត់ថ្នាក់រួម (Rank)៖
-                  </td>
-                  <td colSpan={2} className="px-2 py-3 border-r border-gray-300 text-center text-sm text-rose-650 font-mono font-black bg-indigo-50">
-                    {average > 0 && rank > 0 ? `${toKhmerDigits(rank)}` : '—'}
-                  </td>
-                  <td colSpan={2} className="px-2 py-3 border-r border-gray-300 font-normal italic text-[10px] text-gray-500 bg-white/20">
-                    —
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          {/* CLASS STATS ACCORDING TO IMAGE */}
-          <div className="flex justify-between items-center text-xs font-sans text-gray-800 pt-1">
-            <p className="font-semibold text-indigo-950">
-              ចំនួនសិស្សសរុប៖ <span className="underline underline-offset-4 decoration-dotted font-bold text-gray-900">{toKhmerDigits(students.length)} នាក់</span> (ស្រី៖ <span className="underline underline-offset-4 decoration-dotted font-bold text-pink-700">{toKhmerDigits(students.filter(s => s.gender === 'ស្រី').length)} នាក់</span>)
-            </p>
-            <p className="text-[10px] text-gray-400 font-mono italic">
-              * ពិន្ទុ និងការគណនាត្រូវបានផ្ទៀងផ្ទាត់ដោយប្រព័ន្ធអេឡិចត្រូនិច
-            </p>
-          </div>
-
-          {/* SIGNATURES AND EVALUATION BOX AT BOTTOM */}
-          <div className="grid grid-cols-3 gap-6 pt-6 border-t border-dashed border-gray-200 text-center text-xs leading-relaxed font-sans">
-            
-            {/* Column 1: Parent Remarks */}
-            <div className="space-y-1.5 flex flex-col items-center">
-              <h4 className="font-bold text-gray-900">ការវាយតម្លៃ / មតិយោបល់អាណាព្យាបាល</h4>
-              <div className="w-full space-y-2.5 pt-2">
-                <div className="border-b border-dotted border-gray-400 w-full h-4"></div>
-                <div className="border-b border-dotted border-gray-400 w-full h-4"></div>
-                <div className="border-b border-dotted border-gray-400 w-full h-4"></div>
-                <div className="border-b border-dotted border-gray-400 w-full h-4"></div>
-              </div>
-            </div>
-
-            {/* Column 2: Director stamp/approval */}
-            <div className="space-y-2 flex flex-col justify-between h-full pt-1">
-              <div className="space-y-1">
-                <p className="font-medium text-gray-600">បានឃើញ និងឯកភាព</p>
-                <p className="font-moul text-[9px] text-gray-900">នាយកសាលាបឋមសិក្សា</p>
-              </div>
-              <div className="h-16 flex items-center justify-center text-[10px] text-gray-400 border border-dashed border-gray-200 rounded-xl bg-gray-50/20 max-w-[150px] mx-auto w-full">
-                (ហត្ថលេខា និងត្រា)
-              </div>
-              <p className="text-gray-400">...................................................</p>
-            </div>
-
-            {/* Column 3: Teacher signature with Buddhist date */}
-            <div className="space-y-1.5 text-right flex flex-col justify-between h-full pt-1">
-              <div className="space-y-1 text-center font-medium">
-                <p className="italic text-[10px] text-gray-500 font-sans">
-                  ថ្ងៃ{kDate.dayOfWeek}..........ខែ............ឆ្នាំ មមី អដ្ឋស័ក ព.ស. {kDate.beYear}
-                </p>
-                <p className="font-sans text-[10px] text-gray-700">
-                  ត្រូវនឹង ថ្ងៃទី {kDate.dateNum} ខែ {kDate.monthName} ឆ្នាំ {kDate.yearNum}
-                </p>
-                <p className="font-moul text-[9px] text-gray-850 pt-2 block text-center">គ្រូបន្ទុកថ្នាក់</p>
-              </div>
-              <div className="h-10"></div>
-              <div className="text-center">
-                <p className="font-semibold text-gray-900 underline block text-xs">{classInfo.classTeacher || 'កែវ ច័ន្ទតារា'}</p>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      );
-    } else if (docType === 'biography') {             </td>
-                    </tr>
-                  );
                 })}
 
                 {/* SEMESTER SUMMARY SECTIONS */}
