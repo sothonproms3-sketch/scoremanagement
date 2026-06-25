@@ -16,6 +16,7 @@ export interface Student {
   gradeClass: string; // Grade & Class name (e.g., "ថ្នាក់ទី ៥ អា")
   academicYear: string; // Academic year (e.g., "២០២៤-២០២៥")
   photoUrl?: string; // Optonal student picture or customized avatar
+  status?: 'active' | 'abandoned' | 'transferred'; // Student status (active, abandoned, or transferred)
 }
 
 export interface SubjectScores {

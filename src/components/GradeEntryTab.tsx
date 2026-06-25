@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Student, SubjectScores, AcademicPeriod } from '../types';
 import { PERIODS, SUBJECT_NAMES, SUB_SUBJECTS, calculateRecordMetrics, computeParentSubjectAverages, exportToCSV, getMention } from '../utils';
-import { Save, CheckCircle, Info, HelpCircle, FileSpreadsheet, Keyboard, Download, Copy, LayoutGrid, ListChecks, TrendingDown, TrendingUp, ArrowRight, Award } from 'lucide-react';
+import { Save, CheckCircle, Info, HelpCircle, FileSpreadsheet, Keyboard, Download, Copy, LayoutGrid, ListChecks, TrendingDown, TrendingUp, ArrowRight, Award, Upload, X, FileText, AlertCircle } from 'lucide-react';
 
 interface GradeEntryTabProps {
   students: Student[];
@@ -14,6 +14,18 @@ export default function GradeEntryTab({ students, scores, onSaveScores }: GradeE
   const [localScores, setLocalScores] = useState<{ [studentId: string]: SubjectScores }>({});
   const [isSavedIndicator, setIsSavedIndicator] = useState(false);
   const [entryMode, setEntryMode] = useState<'direct' | 'detailed' | 'summary'>('direct');
+
+  // Excel/CSV Import state
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importText, setImportText] = useState('');
+  const [importPreview, setImportPreview] = useState<{
+    studentId: string;
+    studentName: string;
+    matched: boolean;
+    scores: Partial<SubjectScores>;
+  }[]>([]);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importSuccess, setImportSuccess] = useState<string | null>(null);
 
   // Determine previous academic period based on selection
   const currentIndex = PERIODS.findIndex((p) => p.value === selectedPeriod);
@@ -373,6 +385,250 @@ export default function GradeEntryTab({ students, scores, onSaveScores }: GradeE
     exportToCSV(`តារាងពិន្ទុ_រួមមុខវិជ្ជារង_ខែ_${periodLabel.replace(/\s+/g, '_')}.csv`, headers, rows);
   };
 
+  // Excel/CSV parsing and importing functions
+  const parseImportedGrades = (text: string) => {
+    const lines = text.trim().split(/\r?\n/);
+    if (lines.length < 2) return { success: false, error: 'គ្មានទិន្នន័យគ្រប់គ្រាន់ (ត្រូវតែមានជួរចំណងជើង និងទិន្នន័យសិស្ស)។' };
+
+    const firstLine = lines[0];
+    const delimiter = firstLine.includes('\t') ? '\t' : ',';
+
+    const parseRow = (line: string) => {
+      if (delimiter === '\t') {
+        return line.split('\t').map(cell => cell.trim().replace(/^"|"$/g, ''));
+      } else {
+        const cells = [];
+        let current = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            cells.push(current.trim());
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+        cells.push(current.trim());
+        return cells.map(c => c.replace(/^"|"$/g, ''));
+      }
+    };
+
+    const headers = parseRow(firstLine);
+    
+    // Look for ID/Name columns to match
+    const idIndex = headers.findIndex(h => {
+      const l = h.toLowerCase();
+      return l.includes('id') || l.includes('អត្តសញ្ញាណ') || l.includes('អត្តលេខ') || l.includes('លេខសម្គាល់') || l.includes('student');
+    });
+
+    const nameIndex = headers.findIndex(h => {
+      const l = h.toLowerCase();
+      return l.includes('name') || l.includes('ឈ្មោះ') || l.includes('នាម');
+    });
+
+    // We must find at least one identifying column
+    if (idIndex === -1 && nameIndex === -1) {
+      return { success: false, error: 'រកមិនឃើញជួរឈរ "អត្តសញ្ញាណ (ID)" ឬ "ឈ្មោះសិស្ស" សម្រាប់ផ្ទៀងផ្ទាត់សិស្សឡើយ។' };
+    }
+
+    const keyIndex = idIndex !== -1 ? idIndex : nameIndex;
+
+    const subjectMappings: { key: keyof SubjectScores; names: string[] }[] = [
+      { key: 'khmer', names: ['khmer avg', 'khmer', 'ភាសាខ្មែរ រួម', 'ភាសាខ្មែរ'] },
+      { key: 'khmerReading', names: ['khmer reading', 'ខ្មែរ_រៀនអាន', 'រៀនអាន'] },
+      { key: 'khmerDictation', names: ['khmer dictation', 'ខ្មែរ_សរសេរតាមអាន', 'សរសេរតាមអាន'] },
+      { key: 'khmerComposition', names: ['khmer composition', 'ខ្មែរ_តែងសេចក្តី', 'តែងសេចក្តី'] },
+      
+      { key: 'math', names: ['math avg', 'math', 'គណិតវិទ្យា រួម', 'គណិតវិទ្យា'] },
+      { key: 'mathNumbers', names: ['math numbers', 'គណិត_ចំនួន', 'ចំនួន'] },
+      { key: 'mathMeasurement', names: ['math measurement', 'គណិត_រង្វាស់រង្វាល់', 'រង្វាស់រង្វាល់'] },
+      { key: 'mathGeometry', names: ['math geometry', 'គណិត_ធរណីមាត្រ', 'ធរណីមាត្រ'] },
+      { key: 'mathAlgebra', names: ['math algebra', 'គណិត_ពីជគណិត', 'ពីជគណិត'] },
+      { key: 'mathStatistics', names: ['math statistics', 'គណិត_ស្ថិតិ', 'ស្ថិតិ'] },
+      
+      { key: 'science', names: ['science', 'វិទ្យាសាស្ត្រ'] },
+      
+      { key: 'social', names: ['social avg', 'social', 'សិក្សាសង្គម រួម', 'សិក្សាសង្គម'] },
+      { key: 'socialCivics', names: ['social civics', 'សង្គម_សីលធម៌-ពលរដ្ឋ', 'សីលធម៌-ពលរដ្ឋ'] },
+      { key: 'socialGeography', names: ['social geography', 'សង្គម_ភូមិវិទ្យា', 'ភូមិវិទ្យា'] },
+      { key: 'socialHistory', names: ['social history', 'សង្គម_ប្រវត្តិវិទ្យា', 'ប្រវត្តិវិទ្យា'] },
+      { key: 'socialArts', names: ['social arts', 'សង្គម_សិល្បៈ', 'សិល្បៈ'] },
+      
+      { key: 'artsPE', names: ['artspe', 'អប់រំកាយ/សិល្បៈ', 'អប់រំកាយនិងកីឡា', 'physical education', 'កីឡា'] },
+      { key: 'lifeSkills', names: ['life skills', 'បំណិន', 'បំណិនជីវិត'] },
+      { key: 'foreignLanguage', names: ['foreign language', 'ភាសាបរទេស', 'អង់គ្លេស', 'english'] }
+    ];
+
+    const colMappings: { key: keyof SubjectScores; index: number; label: string }[] = [];
+    subjectMappings.forEach(mapping => {
+      const idx = headers.findIndex(h => {
+        const lh = h.toLowerCase();
+        return mapping.names.some(n => lh.includes(n.toLowerCase()));
+      });
+      if (idx !== -1) {
+        colMappings.push({ key: mapping.key, index: idx, label: headers[idx] });
+      }
+    });
+
+    if (colMappings.length === 0) {
+      return { success: false, error: 'រកមិនឃើញជួរឈរពិន្ទុមុខវិជ្ជាណាមួយឡើយ (ដូចជា ភាសាខ្មែរ, គណិតវិទ្យា, វិទ្យាសាស្ត្រ)។' };
+    }
+
+    const importedStudents: { studentIdentifier: string; scores: Partial<SubjectScores> }[] = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      const cells = parseRow(line);
+      const studentIdentifier = cells[keyIndex];
+      if (!studentIdentifier) continue;
+
+      const studentScores: Partial<SubjectScores> = {};
+      colMappings.forEach(map => {
+        const valStr = cells[map.index];
+        if (valStr !== undefined && valStr !== null && valStr !== '—' && valStr !== '') {
+          // Normalize Khmer numbers to English digits if any
+          const cleanValStr = valStr.replace(/[០-៩]/g, d => String('០១២៣៤៥៦៧៨៩'.indexOf(d)));
+          const val = parseFloat(cleanValStr);
+          if (!isNaN(val)) {
+            studentScores[map.key] = Math.max(0, Math.min(10, val));
+          }
+        }
+      });
+
+      importedStudents.push({ studentIdentifier, scores: studentScores });
+    }
+
+    return { success: true, delimiter, students: importedStudents, colMappings };
+  };
+
+  const handleProcessImportText = (text: string) => {
+    setImportText(text);
+    if (!text.trim()) {
+      setImportPreview([]);
+      setImportError(null);
+      return;
+    }
+
+    const res = parseImportedGrades(text);
+    if (!res.success) {
+      setImportError(res.error || 'មានបញ្ហាក្នុងការវិភាគទិន្នន័យ។');
+      setImportPreview([]);
+      return;
+    }
+
+    setImportError(null);
+
+    // Map parsed data to students
+    const previewData = res.students.map(imported => {
+      const student = students.find(s => 
+        s.id.toLowerCase() === imported.studentIdentifier.toLowerCase() || 
+        s.nameKh.trim() === imported.studentIdentifier.trim() ||
+        s.nameEn.toLowerCase().trim() === imported.studentIdentifier.toLowerCase().trim()
+      );
+      return {
+        studentId: student ? student.id : imported.studentIdentifier,
+        studentName: student ? student.nameKh : `— (${imported.studentIdentifier})`,
+        matched: !!student,
+        scores: imported.scores
+      };
+    });
+
+    setImportPreview(previewData);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      handleProcessImportText(text);
+    };
+    reader.readAsText(file);
+  };
+
+  const handleApplyImport = () => {
+    const matchedItems = importPreview.filter(p => p.matched);
+    if (matchedItems.length === 0) {
+      alert('គ្មានទិន្នន័យសិស្សដែលត្រូវគ្នាសម្រាប់នាំចូលឡើយ។ សូមប្រាកដថាអត្តសញ្ញាណ (ID) ឬឈ្មោះសិស្សត្រូវគ្នាជាមួយបញ្ជីសាលា។');
+      return;
+    }
+
+    setLocalScores(prev => {
+      const nextScores = { ...prev };
+      matchedItems.forEach(item => {
+        const student = students.find(s => s.id === item.studentId);
+        if (student) {
+          const currentScores = nextScores[student.id] || { khmer: 0, math: 0, science: 0, social: 0, artsPE: 0 };
+          const merged = {
+            ...currentScores,
+            ...item.scores
+          };
+          const synced = computeParentSubjectAverages(merged);
+          nextScores[student.id] = synced;
+        }
+      });
+      return nextScores;
+    });
+
+    setIsSavedIndicator(false);
+    setImportSuccess(`នាំចូលពិន្ទុជោគជ័យសម្រាប់សិស្សចំនួន ${matchedItems.length} នាក់! សូមពិនិត្យរួចចុច "រក្សាទុកពិន្ទុ" ដើម្បីរក្សាទុកជាស្ថាពរ។`);
+    
+    setTimeout(() => {
+      setIsImportModalOpen(false);
+      setImportText('');
+      setImportPreview([]);
+      setImportSuccess(null);
+    }, 2500);
+  };
+
+  const handleCopyExcelTemplate = () => {
+    const headers = [
+      'អត្តសញ្ញាណ (ID)',
+      'ឈ្មោះខ្មែរ (Khmer Name)',
+      'ភេទ (Gender)',
+      'ភាសាខ្មែរ (Khmer)',
+      'គណិតវិទ្យា (Math)',
+      'វិទ្យាសាស្ត្រ (Science)',
+      'សិក្សាសង្គម (Social)',
+      'អប់រំកាយ/សិល្បៈ (Arts/PE)',
+      'បំណិន (Life Skills)',
+      'ភាសាបរទេស (Foreign Language)'
+    ];
+
+    const rows = students.map(s => {
+      const studentS = localScores[s.id] || {};
+      return [
+        s.id,
+        s.nameKh,
+        s.gender,
+        studentS.khmer !== undefined ? studentS.khmer : '',
+        studentS.math !== undefined ? studentS.math : '',
+        studentS.science !== undefined ? studentS.science : '',
+        studentS.social !== undefined ? studentS.social : '',
+        studentS.artsPE !== undefined ? studentS.artsPE : '',
+        studentS.lifeSkills !== undefined ? studentS.lifeSkills : '',
+        studentS.foreignLanguage !== undefined ? studentS.foreignLanguage : ''
+      ];
+    });
+
+    const tsvContent = [
+      headers.join('\t'),
+      ...rows.map(row => row.join('\t'))
+    ].join('\n');
+
+    navigator.clipboard.writeText(tsvContent).then(() => {
+      alert('បានចម្លងទម្រង់គំរូទៅ Clipboard! បើកកម្មវិធី Excel ឬ Google Sheets រួចចុច Paste (Ctrl+V) ដើម្បីបំពេញពិន្ទុ។');
+    }).catch(err => {
+      console.error('Failed to copy template: ', err);
+    });
+  };
+
   const decliningStudentsCount = students.filter(student => {
     const rt = computeRealtimeAverages(student.id);
     return rt.s1Average > 0 && rt.s2Average > 0 && rt.s2Average < rt.s1Average;
@@ -451,6 +707,15 @@ export default function GradeEntryTab({ students, scores, onSaveScores }: GradeE
           >
             <Download className="w-3.5 h-3.5 text-emerald-600" />
             នាំចេញជា Excel
+          </button>
+
+          <button
+            onClick={() => setIsImportModalOpen(true)}
+            className="px-3.5 py-2 text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-100 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+            title="នាំចូលពិន្ទុពីឯកសារ Excel/CSV ឬចម្លងពី Excel"
+          >
+            <Upload className="w-3.5 h-3.5 text-indigo-650" />
+            នាំចូលពី Excel
           </button>
 
           {hasPreviousPeriod && (
@@ -1077,6 +1342,191 @@ export default function GradeEntryTab({ students, scores, onSaveScores }: GradeE
           <span>ចំនួនសិស្ស៖ {students.length} នាក់</span>
         </div>
       </div>
+
+      {/* EXCEL IMPORT MODAL */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in font-sans">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-gray-100 transform scale-100 transition-all">
+            {/* Modal Header */}
+            <div className="px-6 py-5 bg-gradient-to-r from-indigo-50 to-indigo-100/50 border-b border-gray-100 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-indigo-600 rounded-xl text-white shadow-md">
+                  <FileSpreadsheet className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-gray-900 text-base">នាំចូលពិន្ទុតាម Excel / CSV</h3>
+                  <p className="text-[11px] text-indigo-700/80 font-semibold">បញ្ចូលពិន្ទុសម្រាប់រដូវកាលសិក្សា៖ <span className="underline">{PERIODS.find(p => p.value === selectedPeriod)?.labelKh}</span></p>
+                </div>
+              </div>
+              <button 
+                onClick={() => {
+                  setIsImportModalOpen(false);
+                  setImportText('');
+                  setImportPreview([]);
+                  setImportError(null);
+                }}
+                className="p-1.5 hover:bg-gray-150 rounded-full text-gray-400 hover:text-gray-700 transition-all cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto flex-1 space-y-5 gray-scrollbar">
+              {importSuccess ? (
+                <div className="p-8 text-center space-y-4">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto text-green-600">
+                    <CheckCircle className="w-10 h-10 animate-bounce" />
+                  </div>
+                  <h4 className="text-lg font-bold text-gray-900">ការនាំចូលជោគជ័យ!</h4>
+                  <p className="text-sm text-gray-600 max-w-md mx-auto">{importSuccess}</p>
+                </div>
+              ) : (
+                <>
+                  {/* Step 1: Formats & Template */}
+                  <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100/40 space-y-3">
+                    <div className="flex items-start gap-2.5">
+                      <Info className="w-4 h-4 text-indigo-600 mt-0.5 shrink-0" />
+                      <div className="text-xs text-indigo-900 space-y-1">
+                        <span className="font-bold block text-sm">របៀបនាំចូលពី Excel៖</span>
+                        <p>១. ចុចប៊ូតុងខាងក្រោមដើម្បី <span className="font-black underline">ចម្លងទម្រង់សិស្ស</span> រួចយកទៅ <span className="font-black underline">Paste (Ctrl+V)</span> ក្នុងកម្មវិធី Excel ឬ Google Sheets របស់អ្នក។</p>
+                        <p>២. បំពេញពិន្ទុរបស់សិស្សម្នាក់ៗតាមមុខវិជ្ជា (ចន្លោះពី ០ ដល់ ១០)។</p>
+                        <p>៣. ចម្លងជួរឈរទាំងអស់ រួមទាំងចំណងជើងពី Excel រួចយកមក <span className="font-black underline">Paste</span> ក្នុងប្រអប់ទិន្នន័យខាងក្រោម ឬរក្សាទុកជាឯកសារ .CSV រួច Upload ចូល។</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCopyExcelTemplate}
+                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs hover:shadow-md transition-all flex items-center gap-1.5 cursor-pointer ml-6"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                      ចម្លងគំរូទម្រង់ Excel សម្រាប់សិស្សបច្ចុប្បន្ន
+                    </button>
+                  </div>
+
+                  {/* Step 2: Paste / Upload Section */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wider block">បិទភ្ជាប់ទិន្នន័យពី Excel ឬ Upload ឯកសារ CSV (Paste or Upload Data)</label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-gray-400">ឬជ្រើសរើសឯកសារ CSV:</span>
+                        <label className="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-[10px] rounded-lg cursor-pointer transition-all border border-gray-200">
+                          <Upload className="w-3 h-3 inline mr-1" />
+                          ជ្រើសរើសឯកសារ
+                          <input 
+                            type="file" 
+                            accept=".csv,.txt" 
+                            onChange={handleFileUpload} 
+                            className="hidden" 
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    <textarea
+                      value={importText}
+                      onChange={(e) => handleProcessImportText(e.target.value)}
+                      placeholder="ចម្លងទិន្នន័យពី Excel (Copy all rows including headers) រួចបិទភ្ជាប់ (Paste) នៅទីនេះ..."
+                      className="w-full h-40 p-4 border border-gray-200 rounded-2xl font-mono text-xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none bg-slate-50 focus:bg-white transition-all shadow-inner placeholder:text-gray-400"
+                    />
+                  </div>
+
+                  {/* Step 3: Error or Preview display */}
+                  {importError && (
+                    <div className="p-3 bg-rose-50 text-rose-700 rounded-xl text-xs flex items-start gap-2 border border-rose-100">
+                      <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                      <div>
+                        <span className="font-bold">កំហុសក្នុងការវិភាគ៖</span> {importError}
+                      </div>
+                    </div>
+                  )}
+
+                  {importPreview.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-gray-700">លទ្ធផលនៃការវិភាគទិន្នន័យ ({importPreview.length} ជួររកឃើញ)៖</span>
+                        <span className="text-[10px] text-indigo-650 font-bold">
+                          ត្រូវគ្នា៖ {importPreview.filter(p => p.matched).length} / មិនត្រូវគ្នា៖ {importPreview.filter(p => !p.matched).length}
+                        </span>
+                      </div>
+                      
+                      <div className="border border-gray-150 rounded-xl overflow-hidden max-h-48 overflow-y-auto gray-scrollbar text-xs">
+                        <table className="w-full border-collapse text-left">
+                          <thead className="bg-gray-50 text-gray-700 font-bold border-b border-gray-150 sticky top-0">
+                            <tr>
+                              <th className="px-3 py-2">អត្តសញ្ញាណ (ID)</th>
+                              <th className="px-3 py-2">ឈ្មោះសិស្សក្នុងប្រព័ន្ធ</th>
+                              <th className="px-3 py-2 text-center">ស្ថានភាព</th>
+                              <th className="px-3 py-2">ពិន្ទុដែលនឹងនាំចូល (Scores parsed)</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100 bg-white">
+                            {importPreview.map((item, idx) => (
+                              <tr key={idx} className={item.matched ? 'hover:bg-slate-50/50' : 'bg-rose-50/30'}>
+                                <td className="px-3 py-2 font-mono font-bold text-gray-600">{item.studentId}</td>
+                                <td className={`px-3 py-2 font-bold ${item.matched ? 'text-gray-900' : 'text-rose-650'}`}>
+                                  {item.studentName}
+                                </td>
+                                <td className="px-3 py-2 text-center">
+                                  {item.matched ? (
+                                    <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-green-100 text-green-700 font-bold">ត្រូវគ្នា</span>
+                                  ) : (
+                                    <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-rose-100 text-rose-700 font-bold">រកមិនឃើញសិស្ស</span>
+                                  )}
+                                </td>
+                                <td className="px-3 py-2 font-mono text-gray-500 max-w-xs truncate">
+                                  {Object.keys(item.scores).length > 0 ? (
+                                    <div className="flex flex-wrap gap-1">
+                                      {Object.entries(item.scores).map(([subj, val]) => (
+                                        <span key={subj} className="bg-indigo-50 text-indigo-700 text-[9px] font-bold px-1 rounded">
+                                          {subj}: {val}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <span className="text-gray-400 italic">គ្មានពិន្ទុ</span>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            {!importSuccess && (
+              <div className="px-6 py-4 bg-gray-50 border-t border-gray-150 flex items-center justify-end gap-3 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsImportModalOpen(false);
+                    setImportText('');
+                    setImportPreview([]);
+                    setImportError(null);
+                  }}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 text-xs font-bold rounded-xl hover:bg-gray-100 transition-all cursor-pointer"
+                >
+                  បោះបង់ (Cancel)
+                </button>
+                <button
+                  type="button"
+                  onClick={handleApplyImport}
+                  disabled={importPreview.length === 0 || importPreview.filter(p => p.matched).length === 0}
+                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white text-xs font-bold rounded-xl shadow-xs hover:shadow-md transition-all flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  យល់ព្រមនាំចូល ({importPreview.filter(p => p.matched).length})
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

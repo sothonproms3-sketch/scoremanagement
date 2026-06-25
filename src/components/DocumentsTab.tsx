@@ -1153,8 +1153,7 @@ export default function DocumentsTab({ students, scores, attendance, classInfo }
     );
   };
 
-  const renderDocumentContent = () => {  const renderDocumentContent = () => {
-    const kDate = getKhmerDateStrings();
+  const renderDocumentContent = () => {
 
     if (docType === 'tracker') {
       if (!selectedStudent) {
@@ -1228,23 +1227,27 @@ export default function DocumentsTab({ students, scores, attendance, classInfo }
           </div>
 
           {/* DOCUMENT BODY TITLE & META */}
-          <div className="text-center space-y-2 py-2">
-            <h3 className="font-moul text-base text-indigo-900 leading-normal tracking-wide drop-shadow-xs uppercase">
-              ព្រឹត្តិបត្រលទ្ធផលការសិក្សា
+          <div className="text-center space-y-2 py-4 border-t border-b border-black my-2">
+            <h3 className="font-moul text-base text-gray-900 leading-normal tracking-wide uppercase">
+              សៀវភៅតាមដានការសិក្សា និងការអប់រំសិស្ស
             </h3>
-            <p className="font-sans text-xs text-indigo-950 font-bold bg-indigo-50/70 inline-block px-4 py-1.5 rounded-full border border-indigo-100/50">
-              ថ្នាក់រៀន៖ {classInfo.gradeClass || 'ថ្នាក់ទី ៥ អា'} • ឆ្នាំសិក្សា៖ {classInfo.academicYear || '២០២៤-២០២៥'}
+            <p className="font-sans text-xs text-gray-700 font-extrabold mt-1">
+              (STUDENT GRADEBOOK REPORT CARD)
             </p>
-            <p className="font-sans text-xs text-amber-800 font-extrabold block">
-              រដូវកាល៖ {getPeriodLabelKh()}
-            </p>
+            <div className="flex justify-center gap-6 mt-2 text-xs font-bold text-indigo-900 bg-slate-50 border border-slate-150 inline-flex px-6 py-1.5 rounded-xl">
+              <span>ថ្នាក់រៀន៖ {classInfo.gradeClass || 'ថ្នាក់ទី ៥ អា'}</span>
+              <span>•</span>
+              <span>ឆ្នាំសិក្សា៖ {classInfo.academicYear || '២០២៤-២០២៥'}</span>
+              <span>•</span>
+              <span className="text-amber-800">រដូវកាល៖ {getPeriodLabelKh()}</span>
+            </div>
           </div>
 
           {/* STUDENT DETAIL BAR */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50 border border-slate-150 p-4 rounded-2xl text-xs font-sans text-gray-700">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50 border border-slate-150 p-4 rounded-2xl text-xs font-sans text-gray-700 mb-4">
             <div>
               <span className="text-gray-400 block font-medium mb-1">គោត្តនាម-នាមសិស្ស៖</span>
-              <strong className="text-sm text-gray-950 font-bold">{selectedStudent.nameKh}</strong>
+              <strong className="text-sm text-gray-950 font-moul font-normal">{selectedStudent.nameKh}</strong>
             </div>
             <div>
               <span className="text-gray-400 block font-medium mb-1">អក្សរឡាតាំង (Latin)៖</span>
@@ -1260,206 +1263,174 @@ export default function DocumentsTab({ students, scores, attendance, classInfo }
             </div>
           </div>
 
-          {/* MAIN RESULTS TABLE */}
+          {/* RESULTS TABLE */}
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse border border-gray-300 text-left text-xs font-sans">
+            <table className="w-full border-collapse border border-black text-left text-xs font-sans">
               <thead>
-                <tr className="bg-gray-100 text-gray-700 font-bold text-center border-b border-gray-300">
-                  <th rowSpan={2} className="px-2.5 py-3 border-r border-gray-300 w-12 text-center font-bold">ល.រ</th>
-                  <th rowSpan={2} className="px-4 py-3 border-r border-gray-300 text-left font-bold w-48">មុខវិជ្ជា (Subjects)</th>
-                  <th colSpan={2} className="px-2 py-1.5 border-r border-gray-300 font-bold w-36">លទ្ធផលសិក្សា (Scores)</th>
-                  <th colSpan={2} className="px-2 py-1.5 border-r border-gray-300 font-bold w-36">អវត្តមាន (Absences)</th>
-                  <th rowSpan={2} className="px-4 py-3 font-bold text-left">សេចក្តីសង្កេត និងការវាយតម្លៃរបស់គ្រូបន្ទុកថ្នាក់</th>
+                <tr className="bg-gray-100 text-center font-bold text-xs border border-black">
+                  <th rowSpan={2} className="border border-black px-1.5 py-2 w-10 text-center font-bold">ល.រ</th>
+                  <th rowSpan={2} className="border border-black px-3 py-2 text-left w-48 font-bold">មុខវិជ្ជា (Subjects)</th>
+                  <th colSpan={2} className="border border-black px-1 py-1 w-32 font-bold text-center">លទ្ធផលការសិក្សា (Results)</th>
+                  <th colSpan={2} className="border border-black px-1 py-1 w-24 font-bold text-center">អវត្តមាន (Absences)</th>
+                  <th rowSpan={2} className="border border-black px-3 py-2 text-center w-52 font-bold">មូលវិចាររបស់គ្រូ (Remarks)</th>
                 </tr>
-                <tr className="bg-gray-550 text-gray-650 text-center border-b border-gray-300 font-bold">
-                  <th className="px-2 py-2 border-r border-gray-300">ពិន្ទុ</th>
-                  <th className="px-2 py-2 border-r border-gray-300">និទ្ទេស</th>
-                  <th className="px-2 py-2 border-r border-gray-300 text-green-700">ច្បាប់</th>
-                  <th className="px-2 py-2 border-r border-gray-300 text-rose-700">ឥតច្បាប់</th>
+                <tr className="bg-gray-550 text-gray-650 text-center border border-black font-bold text-[10px]">
+                  <th className="border border-black px-1 py-1.5 w-16">ពិន្ទុ (Score)</th>
+                  <th className="border border-black px-1 py-1.5 w-16">និទ្ទេស (Grade)</th>
+                  <th className="border border-black px-1 py-1.5 w-12 text-green-700">ច្បាប់ (E)</th>
+                  <th className="border border-black px-1 py-1.5 w-12 text-rose-700">ឥត (U)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-300">
-                {SUBJECT_NAMES.map((sub, idx) => {
-                  const score = getStudentSubjectScore(selectedStudentId, sub.value, selectedPeriod);
-                  const isLastRow = idx === SUBJECT_NAMES.length - 1;
+              <tbody>
+                {[
+                  { key: 'khmerComposition', labelKh: 'តែងសេចក្តី', labelEn: 'Composition' },
+                  { key: 'khmerDictation', labelKh: 'សរសេរតាមអាន', labelEn: 'Dictation' },
+                  { key: 'khmerReading', labelKh: 'អាន-សំណួរ', labelEn: 'Reading & Questions' },
+                  { key: 'math', labelKh: 'គណិតវិទ្យា', labelEn: 'Mathematics' },
+                  { key: 'science', labelKh: 'វិទ្យាសាស្ត្រ', labelEn: 'Science' },
+                  { key: 'socialCivics', labelKh: 'សីលធម៌-ពលរដ្ឋ', labelEn: 'Moral & Civics' },
+                  { key: 'socialGeography', labelKh: 'ភូមិវិទ្យា', labelEn: 'Geography' },
+                  { key: 'socialHistory', labelKh: 'ប្រវត្តិវិទ្យា', labelEn: 'History' },
+                  { key: 'socialArts', labelKh: 'គំនូរ-សិប្បកម្ម', labelEn: 'Drawing & Crafts' },
+                  { key: 'artsPE', labelKh: 'អប់រំកាយ', labelEn: 'Physical Education' },
+                  { key: 'lifeSkills', labelKh: 'បំណិនជីវិត', labelEn: 'Life Skills' },
+                  { key: 'foreignLanguage', labelKh: 'ភាសាបរទេស', labelEn: 'Foreign Language' },
+                ].map((sub, idx, arr) => {
+                  const score = getStudentSubjectScore(selectedStudentId, sub.key as keyof SubjectScores, selectedPeriod);
+                  const isLastRow = idx === arr.length - 1;
 
                   return (
-                    <tr key={sub.value} className="hover:bg-gray-50/50 transition-colors">
+                    <tr key={sub.key} className="hover:bg-gray-50/30 transition-colors border-b border-black">
                       {/* 1. index */}
-                      <td className="px-2.5 py-3 border-r border-gray-300 text-center font-semibold font-mono text-gray-500">
+                      <td className="border border-black px-1.5 py-1.5 text-center font-semibold font-mono text-gray-700">
                         {toKhmerDigits(idx + 1)}
                       </td>
                       {/* 2. subject label */}
-                      <td className="px-4 py-3 border-r border-gray-300 font-semibold text-gray-900">
-                        {sub.labelKh}
+                      <td className="border border-black px-3 py-1.5 font-semibold text-gray-950">
+                        <div>{sub.labelKh}</div>
+                        <div className="text-[9px] text-gray-400 font-normal uppercase leading-none">{sub.labelEn}</div>
                       </td>
                       {/* 3. subject score */}
-                      <td className="px-2 py-3 border-r border-gray-300 text-center font-mono font-bold text-gray-800">
-                        {score !== undefined ? score.toFixed(1) : '—'}
+                      <td className="border border-black px-1 py-1.5 text-center font-mono font-bold text-gray-900 bg-slate-50/20">
+                        {score !== undefined ? toKhmerDigits(score.toFixed(1)) : '—'}
                       </td>
                       {/* 4. subject grade */}
-                      <td className="px-2 py-3 border-r border-gray-300 text-center font-bold text-gray-800 font-sans">
-                        <span className={`px-2 py-0.5 rounded text-xs font-black ${
-                          getSubjectGrade(score) === 'A' ? 'bg-green-100 text-green-700' :
-                          getSubjectGrade(score) === 'B' ? 'bg-blue-100 text-blue-700' :
-                          getSubjectGrade(score) === 'C' ? 'bg-amber-100 text-amber-700' :
-                          getSubjectGrade(score) === 'D' ? 'bg-orange-100 text-orange-700' :
-                          getSubjectGrade(score) === 'E' ? 'bg-rose-100 text-rose-700' : 'text-gray-400'
-                        }`}>
-                          {getSubjectGrade(score)}
-                        </span>
+                      <td className="border border-black px-1 py-1.5 text-center font-bold text-gray-900 font-sans">
+                        {getSubjectGrade(score) || '—'}
                       </td>
 
-                      {/* 5. Attendance (Merged cell showing totals in the bottom or just shown on the last row) */}
-                      {idx === 0 ? (
-                        <>
-                          <td rowSpan={SUBJECT_NAMES.length - 1} className="px-2 py-3 border-r border-gray-300 text-center text-gray-400 font-mono text-xs select-none">—</td>
-                          <td rowSpan={SUBJECT_NAMES.length - 1} className="px-2 py-3 border-r border-gray-300 text-center text-gray-400 font-mono text-xs select-none">—</td>
-                        </>
-                      ) : null}
+                      {/* 5. Absences */}
+                      <td className="border border-black px-1 py-1.5 text-center font-mono text-xs text-green-700 font-bold bg-green-50/10">
+                        {isLastRow ? (excused > 0 ? toKhmerDigits(excused) : '០') : ''}
+                      </td>
+                      <td className="border border-black px-1 py-1.5 text-center font-mono text-xs text-rose-700 font-bold bg-rose-50/10">
+                        {isLastRow ? (unexcused > 0 ? toKhmerDigits(unexcused) : '០') : ''}
+                      </td>
 
-                      {/* On the last row, we display the dynamic excused & unexcused totals */}
-                      {isLastRow ? (
-                        <>
-                          <td className="px-2 py-3 border-r border-gray-300 text-center font-mono text-xs text-green-700 bg-green-50/30 font-bold border-t border-gray-300">
-                            {excused > 0 ? toKhmerDigits(excused) : '០'}
-                          </td>
-                          <td className="px-2 py-3 border-r border-gray-300 text-center font-mono text-xs text-rose-700 bg-rose-50/30 font-bold border-t-2 border-gray-300">
-                            {unexcused > 0 ? toKhmerDigits(unexcused) : '០'}
-                          </td>
-                        </>
-                      ) : null}
-
-                      {/* 6. Teacher's Evaluation Column - spans across all 7 subject rows! */}
+                      {/* 6. Teacher's Evaluation Column - spans across all rows! */}
                       {idx === 0 ? (
-                        <td rowSpan={SUBJECT_NAMES.length} className="px-4 py-3 text-left font-sans text-xs text-gray-700 bg-indigo-50/10 border-b border-gray-300 align-top relative whitespace-pre-wrap max-w-sm">
+                        <td rowSpan={arr.length} className="border border-black px-3 py-3 text-left font-sans text-xs bg-slate-50/5 align-top relative whitespace-pre-wrap max-w-[200px]">
                           <div className="space-y-3">
                             <p className="font-semibold text-indigo-950 italic underline decoration-indigo-200">
                               ការវាយតម្លៃស្វ័យប្រវត្តិ៖
                             </p>
-                            <p className="text-gray-800 leading-relaxed bg-white border border-indigo-100/50 p-2.5 rounded-xl shadow-xs italic font-medium">
-                              "{average > 0 ? getResultComments(average) : 'មិនទាន់មានទិន្នន័យពិន្ទុគ្រប់គ្រាន់។'}"
+                            <p className="text-gray-855 leading-relaxed bg-white border border-gray-200 p-2.5 rounded-xl shadow-xs italic font-semibold">
+                              "{average > 0 ? getResultComments(average) : 'មិនទាន់មានពិន្ទុគ្រប់គ្រាន់។'}"
                             </p>
-                            <div className="border-t border-dashed border-gray-200 pt-2.5 space-y-2 mt-4">
-                              <span className="text-[10px] text-gray-400 block uppercase font-bold tracking-wider">សេចក្តីសង្កេតបន្ថែមរបស់គ្រូ៖</span>
-                              <div className="h-28 flex flex-col justify-between">
-                                <div className="border-b border-dotted border-gray-300 h-6"></div>
-                                <div className="border-b border-dotted border-gray-300 h-6"></div>
-                                <div className="border-b border-dotted border-gray-300 h-6"></div>
-                                <div className="border-b border-dotted border-gray-300 h-6"></div>
+                            <div className="border-t border-dashed border-gray-300 pt-2 space-y-1">
+                              <span className="text-[9px] text-gray-400 block uppercase font-bold tracking-wider">សេចក្តីសង្កេតបន្ថែមរបស់គ្រូ៖</span>
+                              <div className="space-y-4 pt-1">
+                                <div className="border-b border-dotted border-gray-400 h-4"></div>
+                                <div className="border-b border-dotted border-gray-400 h-4"></div>
+                                <div className="border-b border-dotted border-gray-400 h-4"></div>
+                                <div className="border-b border-dotted border-gray-400 h-4"></div>
                               </div>
                             </div>
                           </div>
                         </td>
                       ) : null}
-
                     </tr>
                   );
                 })}
-                })}
 
-                {/* SEMESTER SUMMARY SECTIONS */}
-                <tr className="bg-indigo-50/30 font-bold border-t-2 border-indigo-200">
-                  <td className="px-3 py-2.5 text-left border-r border-gray-300 font-extrabold text-indigo-900 uppercase">
-                    ឆមាសទី១ (Semester 1)
+                {/* METRICS SUMMARY ROWS */}
+                <tr className="font-bold border border-black">
+                  <td colSpan={2} className="border border-black px-3 py-2 text-right text-gray-900 bg-gray-50/50">សរុបពិន្ទុ (Total Score)៖</td>
+                  <td className="border border-black px-1 py-2 text-center font-mono font-black text-gray-950 bg-indigo-50/30">
+                    {total > 0 ? toKhmerDigits(total.toFixed(1)) : '—'}
                   </td>
-                  <td colSpan={SUBJECT_NAMES.length} className="px-2 py-2.5 border-r border-gray-300 text-gray-400 italic font-normal text-left text-[10px]">
-                    មធ្យមភាគរួម calculated: (មធ្យមភាគ៥ខែ + ប្រឡង)/២
-                  </td>
-                  <td className="px-2 py-2.5 border-r border-gray-300 text-center font-mono"> — </td>
-                  <td className="px-2 py-2.5 border-r border-gray-300 text-center text-indigo-950 font-mono font-black border-2 border-indigo-400 bg-indigo-50">
-                    {studentSummary ? studentSummary.s1Avg.toFixed(2) : '0.00'}
-                  </td>
-                  <td className="px-2 py-2.5 border-r border-gray-300 text-center text-gray-900 font-mono font-black">
-                    {studentSummary && studentSummary.s1Rank > 0 ? studentSummary.s1Rank : '—'}
-                  </td>
-                  <td colSpan={3} className="px-2 py-2.5 border-r border-gray-300 text-center font-normal italic text-[10px] text-gray-500">
-                    —
-                  </td>
-                  <td className="px-3 py-2.5 text-left font-bold text-xs text-indigo-900 leading-normal">
-                    លទ្ធផលប្រុងប្រយ័ត្ន៖ {getMention(studentSummary?.s1Avg || 0)}
-                  </td>
+                  <td colSpan={4} className="border border-black px-2 py-2 bg-white"></td>
                 </tr>
-
-                <tr className="bg-indigo-50/40 font-bold border-t border-indigo-200">
-                  <td className="px-3 py-2.5 text-left border-r border-gray-300 font-extrabold text-indigo-900 uppercase">
-                    ឆមាសទី២ (Semester 2)
+                <tr className="font-bold border border-black">
+                  <td colSpan={2} className="border border-black px-3 py-2 text-right text-gray-900 bg-gray-50/50">មធ្យមភាគ (Average Score)៖</td>
+                  <td className="border border-black px-1 py-2 text-center font-mono font-black text-indigo-800 bg-indigo-50/50">
+                    {average > 0 ? toKhmerDigits(average.toFixed(2)) : '—'}
                   </td>
-                  <td colSpan={SUBJECT_NAMES.length} className="px-2 py-2.5 border-r border-gray-300 text-gray-400 italic font-normal text-left text-[10px]">
-                    មធ្យមភាគរួម calculated: (មធ្យមភាគ៣ខែ + ប្រឡង)/២
-                  </td>
-                  <td className="px-2 py-2.5 border-r border-gray-300 text-center font-mono"> — </td>
-                  <td className="px-2 py-2.5 border-r border-gray-300 text-center text-indigo-950 font-mono font-black border-2 border-indigo-400 bg-indigo-50">
-                    {studentSummary ? studentSummary.s2Avg.toFixed(2) : '0.00'}
-                  </td>
-                  <td className="px-2 py-2.5 border-r border-gray-300 text-center text-gray-900 font-mono font-black">
-                    {studentSummary && studentSummary.s2Rank > 0 ? studentSummary.s2Rank : '—'}
-                  </td>
-                  <td colSpan={3} className="px-2 py-2.5 border-r border-gray-300 text-center font-normal italic text-[10px] text-gray-500">
-                    —
-                  </td>
-                  <td className="px-3 py-2.5 text-left font-bold text-xs text-indigo-950 leading-normal">
-                    លទ្ធផលប្រុងប្រយ័ត្ន៖ {getMention(studentSummary?.s2Avg || 0)}
-                  </td>
+                  <td colSpan={4} className="border border-black px-2 py-2 bg-white"></td>
                 </tr>
-
-                {/* FINAL YEAR END ACADEMIC RECORD */}
-                <tr className="bg-gradient-to-r from-amber-50 to-amber-100 font-bold border-t-2 border-b-2 border-amber-300">
-                  <td className="px-3 py-3 text-left border-r border-gray-300 font-extrabold text-amber-950 flex items-center gap-1">
-                    <Award className="w-4 h-4 text-amber-600" /> ដំណាច់ឆ្នាំ (Year End)
+                <tr className="font-bold border border-black">
+                  <td colSpan={2} className="border border-black px-3 py-2 text-right text-amber-950 bg-amber-50/20">ចំណាត់ថ្នាក់សិស្ស (Student Rank)៖</td>
+                  <td className="border border-black px-1 py-2 text-center font-mono font-black text-rose-700 bg-amber-50/40">
+                    {rank > 0 ? toKhmerDigits(rank) : '—'}
                   </td>
-                  <td colSpan={SUBJECT_NAMES.length} className="px-2 py-3 border-r border-gray-300 text-amber-900 italic font-semibold text-left text-[10px]">
-                    រូបមន្ត MoEYS: (ឆមាសទី១ + ឆមាសទី២) / ២
-                  </td>
-                  <td className="px-2 py-3 border-r border-gray-300 text-center font-mono"> — </td>
-                  <td className="px-2 py-3 border-r border-amber-350 text-center text-amber-950 font-mono font-black text-sm border-2 border-amber-400 bg-amber-200 shadow-xs">
-                    {studentSummary ? studentSummary.yearEndAvg.toFixed(2) : '0.00'}
-                  </td>
-                  <td className="px-2 py-3 border-r border-gray-300 text-center text-amber-900 font-mono font-black text-sm">
-                    {studentSummary && studentSummary.yearEndRank > 0 ? studentSummary.yearEndRank : '—'}
-                  </td>
-                  <td colSpan={3} className="px-2 py-3 border-r border-gray-300 text-center font-medium font-sans text-xs bg-white/40">
-                    <div className="flex flex-col space-y-0.5 text-[9px] text-gray-500 text-left">
-                      <span>ច្បាប់សរុប៖ <strong>{attSummary.totalExcused}</strong></span>
-                      <span>ឥតច្បាប់៖ <strong className="text-rose-600">{attSummary.totalUnexcused}</strong></span>
-                    </div>
-                  </td>
-                  <td className="px-3 py-3 text-left font-sans font-extrabold text-xs text-indigo-950">
-                    លទ្ធផលរួម៖{' '}
-                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                      (studentSummary?.yearEndAvg || 0) >= 5.0
-                        ? 'bg-green-600 text-white'
-                        : 'bg-red-650 text-white'
-                    }`}>
-                      {(studentSummary?.yearEndAvg || 0) >= 5.0 ? 'ជាប់ (Passed) ✅' : 'ធ្លាក់ (Failed) ❌'}
-                    </span>
-                  </td>
+                  <td colSpan={4} className="border border-black px-2 py-2 bg-white"></td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          {/* School stamps and legal signatures rules */}
-          <div className="grid grid-cols-3 text-center text-xs font-sans mt-12 pt-10 gap-6 border-t border-dashed border-gray-150">
-            <div className="space-y-1">
-              <p>សេចក្តីឯកភាព និងចុះហត្ថលេខា</p>
-              <p className="font-moul text-[10px] text-gray-800">អាណាព្យាបាលសិស្ស</p>
-              <div className="h-16" />
-              <p className="text-gray-400">....................................................</p>
+          {/* SIGNATURES AND APPROVAL RULES FOOTER */}
+          <div className="grid grid-cols-3 text-center text-xs font-sans mt-8 pt-6 gap-4 border-t border-dashed border-gray-200">
+            {/* Column 1: Parent and General notes */}
+            <div className="space-y-1 text-left flex flex-col justify-between">
+              <div>
+                <p className="font-bold text-gray-900 leading-normal">ព័ត៌មានស្ថិតិ៖</p>
+                <p className="text-[10px] text-gray-600 font-medium">
+                  • សិស្សសរុប៖ <strong>{toKhmerDigits(students.length)}</strong> នាក់ (ស្រី <strong>{toKhmerDigits(students.filter(s => s.gender === 'ស្រី').length)}</strong>)
+                </p>
+                <div className="border-t border-dashed border-gray-200 mt-2 pt-2">
+                  <p className="font-bold text-gray-900 leading-normal">មតិយោបល់អាណាព្យាបាល៖</p>
+                  <div className="space-y-4 pt-1">
+                    <div className="border-b border-dotted border-gray-400 w-full h-4"></div>
+                    <div className="border-b border-dotted border-gray-400 w-full h-4"></div>
+                    <div className="border-b border-dotted border-gray-400 w-full h-4"></div>
+                  </div>
+                </div>
+              </div>
+              <div className="text-center pt-4">
+                <p className="font-moul text-[9px] text-gray-800">ហត្ថលេខាអាណាព្យាបាល</p>
+                <div className="h-10" />
+                <p className="text-gray-300">............................................</p>
+              </div>
             </div>
 
-            <div className="space-y-1">
-              <p>បានឃើញ និងយល់ព្រម</p>
-              <p className="font-moul text-[10px] text-gray-850">នាយកសាលាបឋមសិក្សា</p>
-              <div className="h-20" />
-              <p className="text-gray-400">....................................................</p>
+            {/* Column 2: Principal Stamp Approval */}
+            <div className="space-y-1 flex flex-col justify-between items-center">
+              <div className="text-center">
+                <p className="font-bold text-gray-900">បានឃើញ និងឯកភាព</p>
+                <p className="font-moul text-[9px] text-gray-800 mt-0.5">នាយកសាលាបឋមសិក្សា</p>
+              </div>
+              <div className="h-20 flex items-center justify-center">
+                <div className="w-16 h-16 border-2 border-dashed border-red-500 rounded-full flex items-center justify-center text-red-500 font-bold text-[8px] uppercase select-none tracking-tighter transform -rotate-12">
+                  សាលាដៅតំរូវ
+                </div>
+              </div>
+              <div className="text-center w-full">
+                <p className="text-gray-350 text-[10px]">............................................</p>
+              </div>
             </div>
 
-            <div className="space-y-1">
-              <p>រាជធានីភ្នំពេញ ថ្ងៃទី០៤ ខែមិថុនា ឆ្នាំ២០២៦</p>
-              <p className="font-moul text-[10px] text-gray-855">គ្រូបន្ទុកថ្នាក់</p>
-              <div className="h-16" />
-              <p className="font-bold text-gray-900 underline block">{classInfo.classTeacher}</p>
+            {/* Column 3: Class Teacher Dates & Name */}
+            <div className="space-y-1 text-center flex flex-col justify-between items-center">
+              <div className="space-y-1 text-center">
+                <p className="italic text-gray-700 text-[10px] leading-relaxed">{certLunarDate}</p>
+                <p className="text-gray-900 text-xs font-semibold">{certSolarDate}</p>
+                <p className="font-moul text-[9px] text-gray-800 mt-0.5">គ្រូបន្ទុកថ្នាក់</p>
+              </div>
+              <div className="h-14" />
+              <div className="text-center">
+                <p className="font-bold text-gray-900 underline block font-sans text-xs">{classInfo.classTeacher}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -1693,8 +1664,30 @@ export default function DocumentsTab({ students, scores, attendance, classInfo }
         </div>
 
         {docType !== 'ageSummary' && docType !== 'ageList' ? (
-          /* Student Navigator List */
-          <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-3 max-h-[60vh] flex flex-col">
+          <>
+            {/* Academic Period Selector */}
+            <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-2">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-wider block px-1">
+                រដូវកាលសិក្សា (Academic Period)
+              </label>
+              <select
+                value={selectedPeriod}
+                onChange={(e) => setSelectedPeriod(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-xs font-sans text-gray-750 bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none cursor-pointer"
+              >
+                <option value="yearEnd">លទ្ធផលប្រចាំឆ្នាំ (Year End)</option>
+                <option value="semester1">មធ្យមភាគ ឆមាសទី១ (Semester 1)</option>
+                <option value="semester2">មធ្យមភាគ ឆមាសទី២ (Semester 2)</option>
+                {PERIODS.map((p) => (
+                  <option key={p.value} value={p.value}>
+                    {p.labelKh} {p.isExam ? '🏆' : ''} ({p.labelEn})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Student Navigator List */}
+            <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-3 max-h-[50vh] flex flex-col">
             <label className="text-[10px] font-black text-gray-400 uppercase tracking-wider block px-1">
               ជ្រើសរើសសិស្ស ({students.length} នាក់)
             </label>
@@ -1725,6 +1718,7 @@ export default function DocumentsTab({ students, scores, attendance, classInfo }
               })}
             </div>
           </div>
+          </>
         ) : docType === 'ageSummary' ? (
           /* Teacher Info & Stats Settings */
           <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-4 max-h-[60vh] overflow-y-auto flex flex-col text-xs text-left">
@@ -2219,3 +2213,4 @@ export default function DocumentsTab({ students, scores, attendance, classInfo }
     </div>
   );
 }
+
