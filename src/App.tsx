@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Student, SubjectScores, AttendanceRecord, AppData, AcademicPeriod, Reminder } from './types';
 import { SAMPLE_STUDENTS, SAMPLE_SCORES, SAMPLE_ATTENDANCE } from './sampleData';
 import { exportStudentProfilesToCSV, exportCumulativeGradesToCSV, exportCumulativeAttendanceToCSV } from './utils';
+const schoolLogoImg = new URL('./assets/images/school_logo_emblem_1782461472875.jpg', import.meta.url).href;
 
 // Modular Tab Components
 import StudentsTab from './components/StudentsTab';
@@ -26,7 +27,8 @@ import {
   Trash2, 
   ClipboardCheck, 
   Building,
-  Check
+  Check,
+  Sparkles
 } from 'lucide-react';
 
 const DEFAULT_REMINDERS: Reminder[] = [
@@ -118,6 +120,7 @@ export default function App() {
   const [gradeClass, setGradeClass] = useState('ថ្នាក់ទី ៥ អា');
   const [classTeacher, setClassTeacher] = useState('កែវ ច័ន្ទតារា');
   const [academicYear, setAcademicYear] = useState('២០២៤-២០២៥');
+  const [logoUrl, setLogoUrl] = useState<string>(schoolLogoImg);
 
   // Load database from LocalStorage or seed with realistic sample data
   useEffect(() => {
@@ -135,6 +138,7 @@ export default function App() {
           setGradeClass(parsed.classInfo.gradeClass || 'ថ្នាក់ទី ៥ អា');
           setClassTeacher(parsed.classInfo.classTeacher || 'កែវ ច័ន្ទតារា');
           setAcademicYear(parsed.classInfo.academicYear || '២០២៤-២០២៥');
+          setLogoUrl(parsed.classInfo.logoUrl || schoolLogoImg);
         }
       } catch (err) {
         console.error('Failed to parse local storage gradebook data, resetting.', err);
@@ -167,7 +171,8 @@ export default function App() {
         schoolName: 'សាលាបឋមសិក្សាគំរូពញាក្រែក',
         gradeClass: 'ថ្នាក់ទី ៥ អា',
         classTeacher: 'កែវ ច័ន្ទតារា',
-        academicYear: '២០២៤-២០២៥'
+        academicYear: '២០២៤-២០២៥',
+        logoUrl: schoolLogoImg
       },
       reminders: DEFAULT_REMINDERS
     };
@@ -176,6 +181,7 @@ export default function App() {
     setGradeClass(initialData.classInfo.gradeClass);
     setClassTeacher(initialData.classInfo.classTeacher);
     setAcademicYear(initialData.classInfo.academicYear);
+    setLogoUrl(initialData.classInfo.logoUrl || schoolLogoImg);
     saveToLocalStorage(initialData);
   };
 
@@ -190,7 +196,8 @@ export default function App() {
         schoolName: schoolName.trim(),
         gradeClass: gradeClass.trim(),
         classTeacher: classTeacher.trim(),
-        academicYear: academicYear.trim()
+        academicYear: academicYear.trim(),
+        logoUrl: logoUrl
       }
     };
 
@@ -384,6 +391,7 @@ export default function App() {
           setGradeClass(parsed.classInfo.gradeClass);
           setClassTeacher(parsed.classInfo.classTeacher);
           setAcademicYear(parsed.classInfo.academicYear);
+          setLogoUrl(parsed.classInfo.logoUrl || schoolLogoImg);
           saveToLocalStorage(parsed);
           alert('បានទាញចូលទិន្នន័យ (Import JSON) រក្សាទុកដោយជោគជ័យ!');
         } else {
@@ -407,10 +415,12 @@ export default function App() {
           schoolName: 'សាលាបឋមសិក្សាគំរូពញាក្រែក',
           gradeClass: 'ថ្នាក់ទី ៥ អា',
           classTeacher: 'កែវ ច័ន្ទតារា',
-          academicYear: '២០២៤-២០២៥'
+          academicYear: '២០២៤-២០២៥',
+          logoUrl: schoolLogoImg
         }
       };
       setAppData(blankData);
+      setLogoUrl(schoolLogoImg);
       saveToLocalStorage(blankData);
     }
   };
@@ -434,9 +444,20 @@ export default function App() {
           
           {/* Logo Brand traditional framing */}
           <div className="flex items-center gap-3">
-            <div className="bg-amber-400 p-2 rounded-2xl shadow-inner text-indigo-950 active-pulse">
-              <GraduationCap className="w-7 h-7" />
-            </div>
+            {appData.classInfo.logoUrl ? (
+              <div className="w-11 h-11 rounded-xl overflow-hidden bg-white flex items-center justify-center shadow-md border border-amber-300">
+                <img
+                  src={appData.classInfo.logoUrl}
+                  alt="School Logo"
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+            ) : (
+              <div className="bg-amber-400 p-2 rounded-2xl shadow-inner text-indigo-950 active-pulse">
+                <GraduationCap className="w-7 h-7" />
+              </div>
+            )}
             <div>
               <h1 className="font-moul text-xs sm:text-sm text-amber-300 uppercase leading-relaxed">
                 ផ្ទាំងគ្រប់គ្រងពិន្ទុសិស្សថ្នាក់បឋមសិក្សា
@@ -511,6 +532,92 @@ export default function App() {
                     onChange={(e) => setAcademicYear(e.target.value)}
                     className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl font-normal focus:outline-none focus:border-indigo-500 font-mono"
                   />
+                </div>
+              </div>
+
+              {/* 1.5 SCHOOL LOGO CONFIGURATION BLOCK */}
+              <div className="border-t border-gray-100 pt-4 space-y-3">
+                <h4 className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                  <Award className="w-4 h-4 text-amber-500" />
+                  កែសម្រួលនិមិត្តសញ្ញាសាលារៀន (School Logo)
+                </h4>
+                <div className="flex flex-col md:flex-row items-center gap-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  {/* Preview box */}
+                  <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                    <div className="w-20 h-20 bg-white rounded-2xl border border-gray-200 shadow-sm flex items-center justify-center overflow-hidden">
+                      {logoUrl ? (
+                        <img
+                          src={logoUrl}
+                          alt="School Logo Preview"
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <GraduationCap className="w-10 h-10 text-gray-400" />
+                      )}
+                    </div>
+                    <span className="text-[10px] text-gray-400 font-sans">រូបភាពគំរូ (Preview)</span>
+                  </div>
+
+                  {/* Actions column */}
+                  <div className="flex-1 w-full space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                      {/* File Upload Button */}
+                      <label className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-medium cursor-pointer transition-all flex items-center gap-1.5 shadow-sm">
+                        <Upload className="w-3.5 h-3.5" />
+                        តម្លើងឡូហ្គោផ្ទាល់ខ្លួន (Upload Custom)
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = (event) => {
+                                if (event.target?.result) {
+                                  setLogoUrl(event.target.result as string);
+                                }
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                          className="hidden"
+                        />
+                      </label>
+
+                      {/* Use AI Generated Logo Button */}
+                      <button
+                        type="button"
+                        onClick={() => setLogoUrl(schoolLogoImg)}
+                        className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-medium cursor-pointer transition-all flex items-center gap-1.5 shadow-sm"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        ឡូហ្គោរចនាដោយ AI (Use AI Logo)
+                      </button>
+
+                      {/* Reset Button */}
+                      <button
+                        type="button"
+                        onClick={() => setLogoUrl('')}
+                        className="px-3.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-medium cursor-pointer transition-all flex items-center gap-1.5"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                        ឡូហ្គោដើម (Reset to Default)
+                      </button>
+                    </div>
+
+                    {/* Image URL Input */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-gray-500 block">ឬបញ្ចូលតំណភ្ជាប់រូបភាព (Or enter image URL)</label>
+                      <input
+                        type="url"
+                        placeholder="https://example.com/school-logo.png"
+                        value={logoUrl && !logoUrl.startsWith('data:') && !logoUrl.includes('school_logo_emblem') ? logoUrl : ''}
+                        onChange={(e) => setLogoUrl(e.target.value)}
+                        className="w-full px-3 py-1.5 text-xs border border-gray-200 rounded-lg font-normal focus:outline-none focus:border-indigo-500 font-sans"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -905,6 +1012,7 @@ export default function App() {
             <RankingsTab 
               students={appData.students}
               scores={appData.scores}
+              classInfo={appData.classInfo}
             />
           </div>
         )}

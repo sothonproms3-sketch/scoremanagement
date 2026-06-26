@@ -3,15 +3,52 @@ import { Student, SubjectScores, AcademicPeriod } from '../types';
 import { PERIODS, SUBJECT_NAMES, calculateRankings, getMention, getResultComments, exportToCSV, exportToWord } from '../utils';
 import { Trophy, Award, Sparkles, Sliders, List, Columns, Eye, Printer, MapPin, Phone, Download, FileText } from 'lucide-react';
 
+// Helper function to convert Arabic numerals to Khmer digits
+function toKhmerDigits(num: number | string): string {
+  const khmerNumbers = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
+  return num.toString().replace(/[0-9]/g, (w) => khmerNumbers[parseInt(w)]);
+}
+
 interface RankingsTabProps {
   students: Student[];
   scores: { [studentId: string]: { [period in AcademicPeriod]?: SubjectScores } };
+  classInfo?: {
+    schoolName: string;
+    gradeClass: string;
+    classTeacher: string;
+    academicYear: string;
+    logoUrl?: string;
+  };
 }
 
-export default function RankingsTab({ students, scores }: RankingsTabProps) {
+export default function RankingsTab({ students, scores, classInfo: propClassInfo }: RankingsTabProps) {
   const [selectedPeriod, setSelectedPeriod] = useState<AcademicPeriod>('nov');
-  const [rowLayout, setRowLayout] = useState<'1row' | '2rows'>('1row');
+  const [rowLayout, setRowLayout] = useState<'standard' | '1row' | '2rows'>('standard');
   const [activeSubTab, setActiveSubTab] = useState<'rankList' | 'honorBoard'>('rankList');
+
+  // Load classInfo dynamically from localStorage
+  let classInfo = propClassInfo || {
+    schoolName: 'សាលាបឋមសិក្សាគំរូពញាក្រែក',
+    gradeClass: 'ថ្នាក់ទី ៥ អា',
+    classTeacher: 'កែវ ច័ន្ទតារា',
+    academicYear: '២០២៤-២០២៥',
+    logoUrl: '',
+  };
+  if (!propClassInfo) {
+    try {
+      const saved = localStorage.getItem('khmer_primary_gradebook_db_v1');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.classInfo) {
+          classInfo = { ...classInfo, ...parsed.classInfo };
+        }
+      }
+    } catch (e) {
+      console.warn(e);
+    }
+  }
+
+  const periodLabel = PERIODS.find(p => p.value === selectedPeriod)?.labelKh || selectedPeriod;
 
   // Calculate all rankings and scores for each student for the selected period
   const allPeriodRankings = calculateRankings(students, scores);
@@ -230,46 +267,57 @@ export default function RankingsTab({ students, scores }: RankingsTabProps) {
           <button
             onClick={handleExportRankingsCSV}
             className="bg-emerald-50 hover:bg-emerald-100 transition-colors text-emerald-700 border border-emerald-100 px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer"
-            title="នាំចេញចំណាត់ថ្នាក់ជា Excel / CSV"
+            title="នាំចេញបញ្ជីជា CSV"
           >
-            <Download className="w-4 h-4" />
-            Excel/CSV
+            <Download className="w-3.5 h-3.5" />
+            នាំចេញ CSV
           </button>
 
           {/* Export Word button */}
           <button
             onClick={handleExportRankingsWord}
-            className="bg-sky-50 hover:bg-sky-100 transition-colors text-sky-700 border border-sky-100 px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer"
-            title="នាំចេញចំណាត់ថ្នាក់ជា Word (.doc)"
+            className="bg-indigo-50 hover:bg-indigo-100 transition-colors text-indigo-700 border border-indigo-100 px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer"
+            title="នាំចេញបញ្ជីជា Word"
           >
-            <FileText className="w-4 h-4" />
-            Word (.doc)
+            <FileText className="w-3.5 h-3.5" />
+            នាំចេញ Word
           </button>
 
           {/* Print button */}
           <button
-            onClick={handlePrint}
-            className="bg-indigo-50 hover:bg-indigo-100 transition-colors text-indigo-700 border border-indigo-100 px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer"
+            onClick={() => window.print()}
+            className="bg-sky-50 hover:bg-sky-100 transition-colors text-sky-700 border border-sky-100 px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer"
+            title="បោះពុម្ពតារាងចំណាត់ថ្នាក់"
           >
-            <Printer className="w-4 h-4" />
-            បោះពុម្ព (Print)
+            <Printer className="w-3.5 h-3.5" />
+            បោះពុម្ព
           </button>
         </div>
       </div>
 
-      {/* RENDER SUB-TAB 1: RANKINGS LIST */}
+      {/* Options and Layout selectors (Standard Template vs 1 Row vs 2 Rows) */}
       {activeSubTab === 'rankList' && (
-        <div className="space-y-6">
-          {/* Options and Layout selectors (1 Row vs 2 Rows) */}
-          <div className="bg-white px-5 py-3.5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between no-print text-sm">
-            <span className="text-gray-500 text-xs font-semibold flex items-center gap-1">
+          <>
+            <div className="bg-white px-5 py-3.5 rounded-2xl border border-gray-100 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 no-print text-xs">
+            <span className="text-gray-500 font-bold flex items-center gap-1">
               <Sliders className="w-4 h-4 text-indigo-500" />
               របៀបបង្ហាញតារាងពិន្ទុ និងចំណាត់ថ្នាក់៖
             </span>
-            <div className="flex bg-gray-100 p-0.5 rounded-xl border border-gray-100">
+            <div className="flex flex-wrap bg-gray-100 p-0.5 rounded-xl border border-gray-100">
+              <button
+                onClick={() => setRowLayout('standard')}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 cursor-pointer transition-all ${
+                  rowLayout === 'standard'
+                    ? 'bg-white text-indigo-900 shadow-xs font-extrabold'
+                    : 'text-gray-500 hover:text-gray-900'
+                }`}
+              >
+                <List className="w-3.5 h-3.5" />
+                តារាងចំណាត់ថ្នាក់តាមគំរូ (Standard Template)
+              </button>
               <button
                 onClick={() => setRowLayout('1row')}
-                className={`px-3 py-1 text-xs font-medium rounded-lg flex items-center gap-1 cursor-pointer ${
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 cursor-pointer transition-all ${
                   rowLayout === '1row'
                     ? 'bg-white text-indigo-900 shadow-xs font-extrabold'
                     : 'text-gray-500 hover:text-gray-900'
@@ -280,7 +328,7 @@ export default function RankingsTab({ students, scores }: RankingsTabProps) {
               </button>
               <button
                 onClick={() => setRowLayout('2rows')}
-                className={`px-3 py-1 text-xs font-medium rounded-lg flex items-center gap-1 cursor-pointer ${
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 cursor-pointer transition-all ${
                   rowLayout === '2rows'
                     ? 'bg-white text-indigo-900 shadow-xs font-extrabold'
                     : 'text-gray-500 hover:text-gray-900'
@@ -294,18 +342,20 @@ export default function RankingsTab({ students, scores }: RankingsTabProps) {
 
           {/* Table Container */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden print:border-none print:shadow-none">
-            {/* Header for printing */}
-            <div className="hidden print:block text-center space-y-2 mb-6">
-              <h1 className="font-moul text-lg text-gray-900 uppercase">ព្រះរាជាណាចក្រកម្ពុជា</h1>
-              <h2 className="font-moul text-sm text-gray-900">ជាតិ សាសនា ព្រះមហាក្សត្រ</h2>
-              <div className="w-32 h-0.5 bg-gray-300 mx-auto mt-1" />
-              <p className="font-sans text-sm font-bold text-gray-700 mt-3">
-                តារាងចំណាត់ថ្នាក់ និងផលពិន្ទុប្រឡងសិស្សប្រចាំ៖{' '}
-                <span className="underline font-bold">
-                  {PERIODS.find((p) => p.value === selectedPeriod)?.labelKh}
-                </span>
-              </p>
-            </div>
+            {/* Header for printing - Hidden for standard layout because standard has its own gorgeous header */}
+            {rowLayout !== 'standard' && (
+              <div className="hidden print:block text-center space-y-2 mb-6">
+                <h1 className="font-moul text-lg text-gray-900 uppercase">ព្រះរាជាណាចក្រកម្ពុជា</h1>
+                <h2 className="font-moul text-sm text-gray-900">ជាតិ សាសនា ព្រះមហាក្សត្រ</h2>
+                <div className="w-32 h-0.5 bg-gray-300 mx-auto mt-1" />
+                <p className="font-sans text-sm font-bold text-gray-700 mt-3">
+                  តារាងចំណាត់ថ្នាក់ និងផលពិន្ទុប្រឡងសិស្សប្រចាំ៖{' '}
+                  <span className="underline font-bold">
+                    {periodLabel}
+                  </span>
+                </p>
+              </div>
+            )}
 
             <div className="overflow-x-auto">
               {rankedStudents.length === 0 ? (
@@ -313,6 +363,151 @@ export default function RankingsTab({ students, scores }: RankingsTabProps) {
                   <Award className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                   <p className="text-base font-medium">មិនមានទិន្នន័យពិន្ទុសម្រាប់ខែនេះទេ។</p>
                   <p className="text-xs text-gray-400 mt-1">សូមប្រាកដថាអ្នកបានបញ្ចូលពិន្ទុក្នុងផ្ទាំង &ldquo;បញ្ចូលពិន្ទុ&rdquo; ជាមុនសិន។</p>
+                </div>
+              ) : rowLayout === 'standard' ? (
+                /* KHMER PRIMARY SCHOOL STANDARD RANKING TABLE TEMPLATE (MATCHING THE USER IMAGE) */
+                <div className="p-6 sm:p-10 bg-white text-black font-sans relative print:p-0 border-[3px] border-black m-2">
+                  {/* Top Header Section for Web & Print */}
+                  <div className="flex justify-between items-start pb-2 mb-4">
+                    {/* Left Column: Emblem & School Info */}
+                    <div className="flex flex-col items-center justify-center text-center space-y-1 w-1/3">
+                      {classInfo.logoUrl ? (
+                        <div className="w-14 h-14 rounded-xl overflow-hidden border border-black flex items-center justify-center mb-1">
+                          <img
+                            src={classInfo.logoUrl}
+                            alt="School Logo"
+                            className="w-full h-full object-cover"
+                            referrerPolicy="no-referrer"
+                          />
+                        </div>
+                      ) : (
+                        /* High Fidelity MoEYS Emblem */
+                        <svg width="56" height="56" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <circle cx="50" cy="55" r="38" fill="#FBBF24" fillOpacity="0.15" />
+                          <circle cx="50" cy="55" r="34" stroke="#D97706" strokeWidth="2.5" fill="#1E3A8A" />
+                          <circle cx="50" cy="55" r="28" stroke="#FBBF24" strokeWidth="1.5" />
+                          <path d="M50 5 C53 15 57 18 57 23 C57 28 53 30 50 30 C47 30 43 28 43 23 C43 18 47 15 50 5 Z" fill="#F59E0B" stroke="#D97706" strokeWidth="1" />
+                          <path d="M50 10 C51.5 16 54 18 54 22 C54 25 52 27 50 27 C48 27 46 25 46 22 C46 18 48.5 16 50 10 Z" fill="#FCD34D" />
+                          <path d="M30 40 C25 48 30 55 35 55" stroke="#FBBF24" strokeWidth="1.5" strokeLinecap="round" />
+                          <path d="M70 40 C75 48 70 55 65 55" stroke="#FBBF24" strokeWidth="1.5" strokeLinecap="round" />
+                          <path d="M38 68 L62 68 L58 75 L42 75 Z" fill="#FBBF24" stroke="#D97706" strokeWidth="1" />
+                          <path d="M44 60 L56 60 L50 68 Z" fill="#FBBF24" stroke="#D97706" strokeWidth="1" />
+                          <path d="M36 50 Q50 45 64 50 L64 58 Q50 53 36 58 Z" fill="#FFFFFF" stroke="#D97706" strokeWidth="1.5" />
+                          <path d="M50 48 L50 56" stroke="#D97706" strokeWidth="1" />
+                          <line x1="50" y1="35" x2="50" y2="42" stroke="#FBBF24" strokeWidth="1.5" strokeLinecap="round" />
+                          <line x1="36" y1="41" x2="42" y2="45" stroke="#FBBF24" strokeWidth="1.5" strokeLinecap="round" />
+                          <line x1="64" y1="41" x2="58" y2="45" stroke="#FBBF24" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                      )}
+                      <p className="font-moul text-[10px] text-gray-900 leading-none text-center font-bold">
+                        {classInfo.schoolName || 'សាលាបឋមសិក្សា'}
+                      </p>
+                    </div>
+
+                    {/* Right Column: Royal Kingdom Text */}
+                    <div className="text-center w-1/3 self-start space-y-1">
+                      <h1 className="font-moul text-xs text-gray-950 tracking-wide uppercase leading-normal">
+                        ព្រះរាជាណាចក្រកម្ពុជា
+                      </h1>
+                      <h2 className="font-moul text-[9px] text-gray-950 tracking-wider">
+                        ជាតិ សាសនា ព្រះមហាក្សត្រ
+                      </h2>
+                      <div className="flex justify-center items-center gap-0.5 text-gray-400">
+                        <span className="text-xs">~ ~ ~ ~ ~</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Document Title */}
+                  <div className="text-center space-y-1.5 py-1 mb-5">
+                    <h3 className="font-moul text-base text-gray-950 leading-normal uppercase text-center">
+                      ប្រឡងប្រចាំខែ {periodLabel}
+                    </h3>
+                    <h4 className="font-moul text-sm text-gray-950 leading-normal uppercase text-center">
+                      ថ្នាក់ទី {classInfo.gradeClass}
+                    </h4>
+                  </div>
+
+                  {/* Standard Double Border/Thick Border Container */}
+                  <div className="border border-black p-0.5 rounded-xs">
+                    <table className="w-full border-collapse border border-black text-center text-xs font-sans">
+                      <thead>
+                        <tr className="bg-[#2f5597] text-white border-b border-black h-11 text-xs">
+                          <th className="border border-black px-2 py-2 text-center w-14 font-bold text-xs font-sans">ល.រ</th>
+                          <th className="border border-black px-4 py-2 text-left w-64 font-bold text-xs font-sans">គោត្តនាម និងនាម</th>
+                          <th className="border border-black px-2 py-2 text-center w-14 font-bold text-xs font-sans">ភេទ</th>
+                          <th className="border border-black px-3 py-2 text-center w-28 font-bold text-xs font-sans">ពិន្ទុសរុប</th>
+                          <th className="border border-black px-3 py-2 text-center w-28 font-bold text-xs font-sans">មធ្យមភាគ</th>
+                          <th className="border border-black px-2 py-2 text-center w-24 font-bold text-xs font-sans">ចំណាត់ថ្នាក់</th>
+                          <th className="border border-black px-2 py-2 text-center w-20 font-bold text-xs font-sans">និទ្ទេស</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rankedStudents.map((rs, idx) => {
+                          const mention = getMention(rs.stats.average);
+                          const genderChar = rs.student.gender === 'ស្រី' ? 'ស' : 'ប';
+
+                          return (
+                            <tr key={rs.student.id} className="border-b border-black hover:bg-slate-50 transition-colors h-10 text-xs">
+                              {/* No. */}
+                              <td className="border border-black px-2 font-sans font-medium text-gray-950 text-center">
+                                {idx + 1}
+                              </td>
+                              {/* Student Name */}
+                              <td className="border border-black px-4 text-left font-bold text-gray-950 font-sans">
+                                <span>{rs.student.nameKh || rs.student.nameEn}</span>
+                              </td>
+                              {/* Gender (ស / ប) */}
+                              <td className="border border-black px-2 text-center font-bold text-gray-950 font-sans">
+                                {genderChar}
+                              </td>
+                              {/* Total Score */}
+                              <td className="border border-black px-3 font-sans font-medium text-gray-950 text-center">
+                                {rs.stats.sum.toFixed(2)}
+                              </td>
+                              {/* Average Score */}
+                              <td className="border border-black px-3 font-sans font-bold text-gray-950 text-center">
+                                {rs.stats.average.toFixed(2)}
+                              </td>
+                              {/* Rank (RED and Bold) */}
+                              <td className="border border-black px-2 text-center text-red-600 font-extrabold text-sm font-sans">
+                                {rs.stats.rank}
+                              </td>
+                              {/* Mention */}
+                              <td className="border border-black px-2 text-center font-bold text-gray-950 font-sans">
+                                {mention}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* DATES & SIGNATURES BLOCK */}
+                  <div className="pt-6 mt-8 border-t border-dashed border-gray-300">
+                    <div className="grid grid-cols-2 text-center text-xs font-sans gap-6">
+                      <div className="space-y-1.5">
+                        <p className="font-bold text-gray-900">បានឃើញ និងឯកភាព</p>
+                        <p className="font-moul text-[9px] text-gray-800">នាយកសាលាបឋមសិក្សា</p>
+                        <div className="h-16 flex items-center justify-center">
+                          <div className="w-14 h-14 border-2 border-dashed border-red-500 rounded-full flex items-center justify-center text-red-500 font-bold text-[7px] uppercase select-none tracking-tighter transform -rotate-12">
+                            សាលាបឋមសិក្សា
+                          </div>
+                        </div>
+                        <p className="text-gray-350">............................................</p>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <p className="text-gray-500 italic">ធ្វើនៅ ថ្ងៃទី០៤ ខែមិថុនា ឆ្នាំ២០២៦</p>
+                        <p className="font-moul text-[9px] text-gray-800">គ្រូបន្ទុកថ្នាក់</p>
+                        <div className="h-16" />
+                        <p className="font-bold text-gray-950 underline decoration-1 text-sm block leading-none font-sans">
+                          {classInfo.classTeacher}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <table className="w-full border-collapse text-left text-sm print:text-xs">
@@ -481,7 +676,7 @@ export default function RankingsTab({ students, scores }: RankingsTabProps) {
               )}
             </div>
           </div>
-        </div>
+        </>
       )}
 
       {activeSubTab === 'honorBoard' && (

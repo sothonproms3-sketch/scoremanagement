@@ -25,6 +25,7 @@ interface DocumentsTabProps {
     academicYear: string;
     classTeacher: string;
     schoolName: string;
+    logoUrl?: string;
   };
 }
 
@@ -1185,23 +1186,34 @@ export default function DocumentsTab({ students, scores, attendance, classInfo }
             {/* Left side: MoEYS Emblem & School Details */}
             <div className="flex items-center gap-3.5 w-1/2">
               <div className="flex-shrink-0">
-                {/* Embedded High Fidelity MoEYS Emblem */}
-                <svg width="68" height="68" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="50" cy="55" r="38" fill="#FBBF24" fillOpacity="0.15" />
-                  <circle cx="50" cy="55" r="34" stroke="#D97706" strokeWidth="2.5" fill="#1E3A8A" />
-                  <circle cx="50" cy="55" r="28" stroke="#FBBF24" strokeWidth="1.5" />
-                  <path d="M50 5 C53 15 57 18 57 23 C57 28 53 30 50 30 C47 30 43 28 43 23 C43 18 47 15 50 5 Z" fill="#F59E0B" stroke="#D97706" strokeWidth="1" />
-                  <path d="M50 10 C51.5 16 54 18 54 22 C54 25 52 27 50 27 C48 27 46 25 46 22 C46 18 48.5 16 50 10 Z" fill="#FCD34D" />
-                  <path d="M30 40 C25 48 30 55 35 55" stroke="#FBBF24" strokeWidth="1.5" strokeLinecap="round" />
-                  <path d="M70 40 C75 48 70 55 65 55" stroke="#FBBF24" strokeWidth="1.5" strokeLinecap="round" />
-                  <path d="M38 68 L62 68 L58 75 L42 75 Z" fill="#FBBF24" stroke="#D97706" strokeWidth="1" />
-                  <path d="M44 60 L56 60 L50 68 Z" fill="#FBBF24" stroke="#D97706" strokeWidth="1" />
-                  <path d="M36 50 Q50 45 64 50 L64 58 Q50 53 36 58 Z" fill="#FFFFFF" stroke="#D97706" strokeWidth="1.5" />
-                  <path d="M50 48 L50 56" stroke="#D97706" strokeWidth="1" />
-                  <line x1="50" y1="35" x2="50" y2="42" stroke="#FBBF24" strokeWidth="1.5" strokeLinecap="round" />
-                  <line x1="36" y1="41" x2="42" y2="45" stroke="#FBBF24" strokeWidth="1.5" strokeLinecap="round" />
-                  <line x1="64" y1="41" x2="58" y2="45" stroke="#FBBF24" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
+                {classInfo.logoUrl ? (
+                  <div className="w-16 h-16 rounded-xl overflow-hidden border border-black flex items-center justify-center">
+                    <img
+                      src={classInfo.logoUrl}
+                      alt="School Logo"
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                ) : (
+                  /* Embedded High Fidelity MoEYS Emblem */
+                  <svg width="68" height="68" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="55" r="38" fill="#FBBF24" fillOpacity="0.15" />
+                    <circle cx="50" cy="55" r="34" stroke="#D97706" strokeWidth="2.5" fill="#1E3A8A" />
+                    <circle cx="50" cy="55" r="28" stroke="#FBBF24" strokeWidth="1.5" />
+                    <path d="M50 5 C53 15 57 18 57 23 C57 28 53 30 50 30 C47 30 43 28 43 23 C43 18 47 15 50 5 Z" fill="#F59E0B" stroke="#D97706" strokeWidth="1" />
+                    <path d="M50 10 C51.5 16 54 18 54 22 C54 25 52 27 50 27 C48 27 46 25 46 22 C46 18 48.5 16 50 10 Z" fill="#FCD34D" />
+                    <path d="M30 40 C25 48 30 55 35 55" stroke="#FBBF24" strokeWidth="1.5" strokeLinecap="round" />
+                    <path d="M70 40 C75 48 70 55 65 55" stroke="#FBBF24" strokeWidth="1.5" strokeLinecap="round" />
+                    <path d="M38 68 L62 68 L58 75 L42 75 Z" fill="#FBBF24" stroke="#D97706" strokeWidth="1" />
+                    <path d="M44 60 L56 60 L50 68 Z" fill="#FBBF24" stroke="#D97706" strokeWidth="1" />
+                    <path d="M36 50 Q50 45 64 50 L64 58 Q50 53 36 58 Z" fill="#FFFFFF" stroke="#D97706" strokeWidth="1.5" />
+                    <path d="M50 48 L50 56" stroke="#D97706" strokeWidth="1" />
+                    <line x1="50" y1="35" x2="50" y2="42" stroke="#FBBF24" strokeWidth="1.5" strokeLinecap="round" />
+                    <line x1="36" y1="41" x2="42" y2="45" stroke="#FBBF24" strokeWidth="1.5" strokeLinecap="round" />
+                    <line x1="64" y1="41" x2="58" y2="45" stroke="#FBBF24" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                )}
               </div>
               <div className="space-y-1 text-left">
                 <p className="font-moul text-[11px] text-gray-900 leading-normal">ក្រសួងអប់រំ យុវជន និងកីឡា</p>

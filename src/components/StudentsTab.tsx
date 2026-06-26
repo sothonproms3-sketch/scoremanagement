@@ -25,6 +25,32 @@ export default function StudentsTab({
   onImportStudents,
   classInfo
 }: StudentsTabProps) {
+  // Shared utility functions for Khmer digits and Age calculation
+  const toKhmerDigits = (num: number | string): string => {
+    const khmerDigits = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
+    return String(num).replace(/\d/g, (char) => khmerDigits[parseInt(char, 10)]);
+  };
+
+  const khmerToEnglishDigits = (str: string): string => {
+    const khmerDigits = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
+    return str.replace(/[០-៩]/g, (char) => khmerDigits.indexOf(char).toString());
+  };
+
+  const getStudentAge = (dobStr: string, academicYearStr: string): number => {
+    if (!dobStr || dobStr === '—') return 10; // fallback
+    const cleanDob = khmerToEnglishDigits(dobStr);
+    const matchDob = cleanDob.match(/(\d{4})/);
+    const birthYear = matchDob ? parseInt(matchDob[0], 10) : 2015;
+
+    const cleanYear = khmerToEnglishDigits(academicYearStr);
+    const matchYear = cleanYear.match(/(\d{4})/g);
+    const currentYear = matchYear && matchYear.length >= 2 
+      ? parseInt(matchYear[1], 10) 
+      : (matchYear && matchYear.length === 1 ? parseInt(matchYear[0], 10) : 2025);
+
+    return currentYear - birthYear;
+  };
+
   const [searchTerm, setSearchTerm] = useState('');
   const [recordFilter, setRecordFilter] = useState<'all' | 'boys' | 'girls' | 'incomplete'>('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -654,7 +680,7 @@ export default function StudentsTab({
                   <th className="px-6 py-4">ឈ្មោះខ្មែរ</th>
                   <th className="px-6 py-4">ឈ្មោះឡាតាំង</th>
                   <th className="px-6 py-4">ភេទ</th>
-                  <th className="px-6 py-4">ថ្ងៃខែឆ្នាំកំណើត</th>
+                  <th className="px-6 py-4">ថ្ងៃខែឆ្នាំកំណើត (អាយុ)</th>
                   <th className="px-6 py-4">អាណាព្យាបាល / ទំនាក់ទំនង</th>
                   <th className="px-6 py-4 text-center">សកម្មភាព</th>
                 </tr>
@@ -708,7 +734,14 @@ export default function StudentsTab({
                       </span>
                     </td>
                     <td className="px-6 py-4 font-mono text-xs text-gray-500 whitespace-nowrap">
-                      {student.dob || '—'}
+                      <div className="flex flex-col">
+                        <span>{student.dob || '—'}</span>
+                        {student.dob && student.dob !== '—' && (
+                          <span className="text-[10px] text-indigo-600 font-sans font-bold mt-0.5">
+                            អាយុ៖ {toKhmerDigits(getStudentAge(student.dob, classInfo?.academicYear || '២០២៤-២០២៥'))} ឆ្នាំ
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col space-y-0.5 text-xs text-gray-500">

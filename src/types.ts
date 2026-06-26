@@ -118,6 +118,7 @@ export interface AppData {
     academicYear: string;
     classTeacher: string;
     schoolName: string;
+    logoUrl?: string;
   };
   reminders?: Reminder[];
 }
